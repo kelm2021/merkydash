@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<rect width="256" height="256" fill="#000000"/>
+<circle cx="128" cy="128" r="45" fill="#B8BABC" stroke="#9DD7E6" stroke-width="3"/>
+<text x="128" y="145" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="#000000" text-anchor="middle">M</text>
+<ellipse cx="128" cy="65" rx="12" ry="18" fill="#9DD7E6"/>
+<circle cx="128" cy="58" r="8" fill="#B8BABC"/>
+<ellipse cx="75" cy="165" rx="12" ry="18" fill="#9DD7E6" transform="rotate(-30 75 165)"/>
+<circle cx="75" cy="158" r="8" fill="#B8BABC"/>
+<ellipse cx="181" cy="165" rx="12" ry="18" fill="#9DD7E6" transform="rotate(30 181 165)"/>
+<circle cx="181" cy="158" r="8" fill="#B8BABC"/>
+</svg>
