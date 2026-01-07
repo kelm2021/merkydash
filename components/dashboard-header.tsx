@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { RefreshCw, BarChart3, Database, TrendingUp } from 'lucide-react';
+import { RefreshCw, BarChart3, TrendingUp } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface DashboardHeaderProps {
@@ -57,16 +57,6 @@ export function DashboardHeader({ onRefresh, isRefreshing = false }: DashboardHe
               >
                 <TrendingUp className="h-4 w-4" />
                 Markets
-              </Button>
-            </Link>
-            <Link href="/staking-records">
-              <Button
-                variant={pathname === '/staking-records' ? 'default' : 'ghost'}
-                size="sm"
-                className="gap-2"
-              >
-                <Database className="h-4 w-4" />
-                Staking Records
               </Button>
             </Link>
           </nav>

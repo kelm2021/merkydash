@@ -87,12 +87,17 @@ export default function TokenMetricsPage() {
   const marketCap = currentPrice * circulatingSupply;
   const volume24h = marketData?.aggregate?.totalVolume24h || '0';
 
-  // Price chart data
+  // Price chart data - use real data from API if available
+  const priceHistory = marketData?.priceHistory;
   const priceChartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    labels: priceHistory?.chartLabels?.length > 0
+      ? priceHistory.chartLabels
+      : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
     datasets: [{
       label: 'Price',
-      data: [0.0012, 0.0015, 0.0018, 0.0025, 0.0042, 0.0058, 0.0072],
+      data: priceHistory?.chartPrices?.length > 0
+        ? priceHistory.chartPrices
+        : [0.0012, 0.0015, 0.0018, 0.0025, 0.0042, 0.0058, 0.0072],
       borderColor: '#9DD7E6',
       backgroundColor: 'rgba(157, 215, 230, 0.1)',
       borderWidth: 3,
@@ -100,6 +105,10 @@ export default function TokenMetricsPage() {
       fill: true
     }]
   };
+
+  // ATH/ATL data from API
+  const allTimeHigh = priceHistory?.allTimeHigh || 0.0245;
+  const allTimeLow = priceHistory?.allTimeLow || 0.001078;
 
   const priceChartOptions = {
     responsive: true,
@@ -185,7 +194,7 @@ export default function TokenMetricsPage() {
             <ContractCard
               title="Ethereum (Native)"
               badge="ETH"
-              badgeColor="bg-[#627EEA]"
+              badgeColor="bg-[#8B5CF6]"
               address="0x6EE2f71049DDE9a93B7c0EE1091b72aCf9b46810"
               explorerUrl="https://etherscan.io/token/0x6EE2f71049DDE9a93B7c0EE1091b72aCf9b46810"
               supply="4.98B MERC"
@@ -195,7 +204,7 @@ export default function TokenMetricsPage() {
             <ContractCard
               title="Base (Bridged Wrapper)"
               badge="BASE"
-              badgeColor="bg-[#0052FF]"
+              badgeColor="bg-[#14B8A6]"
               address="0x8923947EAfaf4aD68F1f0C9eb5463eC876D79058"
               explorerUrl="https://basescan.org/token/0x8923947EAfaf4aD68F1f0C9eb5463eC876D79058"
               supply="1.02B MERC"
@@ -243,9 +252,12 @@ export default function TokenMetricsPage() {
 
             <div className="p-6">
               {activeTab === 'overview' && (
-                <OverviewTab 
+                <OverviewTab
                   priceChartData={priceChartData}
                   priceChartOptions={priceChartOptions}
+                  allTimeHigh={allTimeHigh}
+                  allTimeLow={allTimeLow}
+                  currentPrice={currentPrice}
                 />
               )}
 
@@ -344,7 +356,11 @@ function ContractCard({
 }
 
 // Overview Tab Component
-function OverviewTab({ priceChartData, priceChartOptions }: any) {
+function OverviewTab({ priceChartData, priceChartOptions, allTimeHigh, allTimeLow, currentPrice }: any) {
+  // Calculate percentage changes from ATH/ATL
+  const athChange = allTimeHigh > 0 ? ((currentPrice - allTimeHigh) / allTimeHigh * 100).toFixed(1) : '0';
+  const atlChange = allTimeLow > 0 ? ((currentPrice - allTimeLow) / allTimeLow * 100).toFixed(1) : '0';
+
   return (
     <>
       <h3 className="text-xl font-semibold mb-5 text-foreground">Price History</h3>
@@ -357,15 +373,23 @@ function OverviewTab({ priceChartData, priceChartOptions }: any) {
           <div className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">
             All-Time High
           </div>
-          <div className="text-2xl font-semibold text-foreground mb-1">$0.0245</div>
-          <div className="text-xs text-red-500">-70.6% from ATH</div>
+          <div className="text-2xl font-semibold text-foreground mb-1">
+            ${allTimeHigh > 0 ? allTimeHigh.toFixed(6) : '0.00'}
+          </div>
+          <div className={`text-xs ${parseFloat(athChange) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {parseFloat(athChange) >= 0 ? '+' : ''}{athChange}% from ATH
+          </div>
         </Card>
         <Card className="p-5 border">
           <div className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">
             All-Time Low
           </div>
-          <div className="text-2xl font-semibold text-foreground mb-1">$0.001078</div>
-          <div className="text-xs text-green-500">+568% from ATL</div>
+          <div className="text-2xl font-semibold text-foreground mb-1">
+            ${allTimeLow > 0 ? allTimeLow.toFixed(6) : '0.00'}
+          </div>
+          <div className={`text-xs ${parseFloat(atlChange) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {parseFloat(atlChange) >= 0 ? '+' : ''}{atlChange}% from ATL
+          </div>
         </Card>
       </div>
     </>
@@ -493,7 +517,7 @@ function TransactionsTab() {
                   <td className="px-3 py-3 text-muted-foreground text-sm">{tx.timeAgo}</td>
                   <td className="px-3 py-3">
                     <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
-                      tx.chain === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#0052FF]'
+                      tx.chain === 'ETH' ? 'bg-[#8B5CF6]' : 'bg-[#14B8A6]'
                     }`}>
                       {tx.chain}
                     </span>
@@ -592,12 +616,12 @@ function HoldersTab() {
                     </a>
                   </td>
                   <td className="px-3 py-3 font-semibold">
-                    {parseFloat(holder.balanceFormatted).toLocaleString()}
+                    {holder.balanceFormatted}
                   </td>
                   <td className="px-3 py-3 text-sm">{holder.percentage}%</td>
                   <td className="px-3 py-3">
                     <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
-                      holder.chain === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#0052FF]'
+                      holder.chain === 'ETH' ? 'bg-[#8B5CF6]' : 'bg-[#14B8A6]'
                     }`}>
                       {holder.chain}
                     </span>

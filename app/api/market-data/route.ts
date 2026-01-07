@@ -146,13 +146,96 @@ async function fetchPoolData(poolConfig: any) {
   }
 }
 
+// Fetch historical OHLCV data from GeckoTerminal
+async function fetchPriceHistory() {
+  try {
+    // Use the Base Uniswap pool for price history (most liquid)
+    const url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${POOLS.uniswapBase.address}/ohlcv/day?aggregate=1&limit=365`;
+
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      next: { revalidate: 3600 } // Cache for 1 hour
+    });
+
+    if (!response.ok) {
+      console.error('GeckoTerminal OHLCV API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.data?.attributes?.ohlcv_list) {
+      console.error('No OHLCV data in response');
+      return null;
+    }
+
+    // OHLCV format: [timestamp, open, high, low, close, volume]
+    const ohlcvList = data.data.attributes.ohlcv_list;
+
+    // Sort by timestamp ascending
+    ohlcvList.sort((a: number[], b: number[]) => a[0] - b[0]);
+
+    // Extract prices and calculate ATH/ATL
+    let allTimeHigh = 0;
+    let allTimeLow = Infinity;
+
+    const priceHistory = ohlcvList.map((candle: number[]) => {
+      const [timestamp, open, high, low, close] = candle;
+      if (high > allTimeHigh) allTimeHigh = high;
+      if (low < allTimeLow && low > 0) allTimeLow = low;
+      return {
+        date: new Date(timestamp * 1000).toISOString().split('T')[0],
+        price: close,
+        high,
+        low
+      };
+    });
+
+    // Get last 12 months of data for the chart
+    const last12Months = priceHistory.slice(-365);
+
+    // Group by month for chart labels
+    const monthlyData: { [key: string]: number[] } = {};
+    last12Months.forEach((item: any) => {
+      const month = item.date.substring(0, 7); // YYYY-MM
+      if (!monthlyData[month]) monthlyData[month] = [];
+      monthlyData[month].push(item.price);
+    });
+
+    // Calculate monthly averages
+    const chartLabels: string[] = [];
+    const chartPrices: number[] = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    Object.keys(monthlyData).sort().forEach(month => {
+      const prices = monthlyData[month];
+      const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+      const monthNum = parseInt(month.split('-')[1]) - 1;
+      chartLabels.push(monthNames[monthNum]);
+      chartPrices.push(avgPrice);
+    });
+
+    return {
+      chartLabels,
+      chartPrices,
+      allTimeHigh,
+      allTimeLow: allTimeLow === Infinity ? 0 : allTimeLow,
+      currentPrice: priceHistory.length > 0 ? priceHistory[priceHistory.length - 1].price : 0
+    };
+  } catch (error) {
+    console.error('Error fetching price history:', error);
+    return null;
+  }
+}
+
 export async function GET() {
   try {
-    // Fetch all pool data in parallel using DexScreener API
-    const [uniswapBase, uniswapEth, aerodrome] = await Promise.all([
+    // Fetch all pool data and price history in parallel
+    const [uniswapBase, uniswapEth, aerodrome, priceHistory] = await Promise.all([
       fetchPoolData(POOLS.uniswapBase),
       fetchPoolData(POOLS.uniswapEth),
-      fetchPoolData(POOLS.aerodromeBase)
+      fetchPoolData(POOLS.aerodromeBase),
+      fetchPriceHistory()
     ]);
 
     // All pools will return data (either real or fallback)
@@ -197,6 +280,13 @@ export async function GET() {
         pools: ethereumPools,
         tvl: ethereumPools.filter(p => !p.unavailable).reduce((sum, pool) => sum + parseFloat(pool?.tvl || '0'), 0).toFixed(2),
         volume24h: ethereumPools.filter(p => !p.unavailable).reduce((sum, pool) => sum + parseFloat(pool?.volume24h || '0'), 0).toFixed(2)
+      },
+      priceHistory: priceHistory || {
+        chartLabels: [],
+        chartPrices: [],
+        allTimeHigh: 0,
+        allTimeLow: 0,
+        currentPrice: 0
       }
     });
   } catch (error) {

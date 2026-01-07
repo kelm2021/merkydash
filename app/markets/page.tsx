@@ -139,7 +139,7 @@ export default function MarketsPage() {
         <section className="mb-6">
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-2xl font-bold text-foreground">Base Network</h2>
-            <span className="bg-[#0052FF] text-white px-3 py-1 rounded text-sm font-semibold">
+            <span className="bg-[#14B8A6] text-white px-3 py-1 rounded text-sm font-semibold">
               BASE
             </span>
           </div>
@@ -161,7 +161,7 @@ export default function MarketsPage() {
         <section className="mb-6">
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-2xl font-bold text-foreground">Ethereum Network</h2>
-            <span className="bg-[#627EEA] text-white px-3 py-1 rounded text-sm font-semibold">
+            <span className="bg-[#8B5CF6] text-white px-3 py-1 rounded text-sm font-semibold">
               ETH
             </span>
           </div>
@@ -264,7 +264,7 @@ function PoolCard({ pool }: { pool: PoolData }) {
               {pool.token0}/{pool.token1}
             </h3>
             <span className={`px-2 py-0.5 rounded text-xs font-semibold text-white ${
-              pool.chain === 'base' ? 'bg-[#0052FF]' : 'bg-[#627EEA]'
+              pool.chain === 'base' ? 'bg-[#14B8A6]' : 'bg-[#8B5CF6]'
             }`}>
               {pool.chain.toUpperCase()}
             </span>
