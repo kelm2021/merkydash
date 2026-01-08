@@ -5,6 +5,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import DashboardHeader from '@/components/dashboard-header';
+import HolderDistributionChart from '@/components/holder-distribution-chart';
+import PriceAlertModal from '@/components/price-alert-modal';
+import usePriceAlerts from '@/hooks/use-price-alerts';
 import {
   Line
 } from 'react-chartjs-2';
@@ -19,7 +22,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import { ArrowUpRight, ArrowDownRight, Users, Activity, Layers, Database, ChevronRight, ExternalLink, TrendingUp, Globe, Zap } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Users, Activity, Layers, Database, ChevronRight, ExternalLink, TrendingUp, Globe, Zap, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -63,6 +66,7 @@ export default function TokenMetricsPage() {
   const [marketData, setMarketData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
 
   // Fetch market data
   const fetchData = () => {
@@ -112,6 +116,9 @@ export default function TokenMetricsPage() {
   const marketCap = currentPrice * circulatingSupply;
   const volume24h = marketData?.aggregate?.totalVolume24h || '1000';
 
+  // Price alerts hook
+  const { alerts, addAlert, activeAlerts } = usePriceAlerts(currentPrice);
+
   const priceHistory = marketData?.priceHistory;
   const priceChartData = {
     labels: priceHistory?.chartLabels?.length > 0
@@ -149,11 +156,11 @@ export default function TokenMetricsPage() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        mode: 'index',
+        mode: 'index' as const,
         intersect: false,
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
         padding: 12,
-        titleFont: { size: 14, weight: 'bold' },
+        titleFont: { size: 14, weight: 'bold' as const },
         bodyFont: { size: 13 },
         borderColor: 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,
@@ -209,7 +216,21 @@ export default function TokenMetricsPage() {
             </div>
 
             <div className="md:text-right">
-              <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-2">Live Price</div>
+              <div className="flex items-center justify-end gap-4 mb-2">
+                <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Live Price</div>
+                <button
+                  onClick={() => setShowAlertModal(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/10 border border-accent/30 text-accent text-xs font-bold hover:bg-accent/20 transition-colors"
+                >
+                  <Bell className="h-3 w-3" />
+                  {activeAlerts.length > 0 && (
+                    <span className="bg-accent text-accent-foreground text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                      {activeAlerts.length}
+                    </span>
+                  )}
+                  Add Alert
+                </button>
+              </div>
               <div className="flex items-baseline gap-3 md:justify-end">
                 <span className="text-5xl font-mono font-medium text-white tracking-tighter">
                   ${loading ? '...' : currentPrice.toFixed(6)}
@@ -329,6 +350,9 @@ export default function TokenMetricsPage() {
                 <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Card>
+
+            {/* Holder Distribution Chart */}
+            <HolderDistributionChart />
           </motion.div>
         </div>
 
@@ -394,6 +418,14 @@ export default function TokenMetricsPage() {
           </p>
         </motion.div>
       </motion.main>
+
+      {/* Price Alert Modal */}
+      <PriceAlertModal
+        isOpen={showAlertModal}
+        onClose={() => setShowAlertModal(false)}
+        currentPrice={currentPrice}
+        onAddAlert={addAlert}
+      />
     </div>
   );
 }

@@ -18,23 +18,78 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ onRefresh, isRefreshing = false }: DashboardHeaderProps) {
   const pathname = usePathname();
   const [gasPrice, setGasPrice] = useState('12');
+  const [whaleAlerts, setWhaleAlerts] = useState<any[]>([]);
+  const [marketData, setMarketData] = useState<any>(null);
 
-  // Simulation for live ticker data
-  const tickerItems = [
-    { label: 'MERC/USD', value: '$0.428', change: '+5.2%', positive: true },
-    { label: 'BTC/USD', value: '$96,240', change: '-1.4%', positive: false },
-    { label: 'ETH/USD', value: '$3,482', change: '+2.1%', positive: true },
-    { label: 'BASE GAS', value: `${gasPrice} Gwei`, change: '', positive: true },
-    { label: 'VOLATILITY INDEX', value: 'LOW', change: 'NOMINAL', positive: true },
-    { label: 'SYS_STATUS', value: 'STABLE', change: 'v2.1', positive: true },
-  ];
+  // Fetch whale activity
+  useEffect(() => {
+    const fetchWhaleActivity = async () => {
+      try {
+        const res = await fetch('/api/whale-activity');
+        const data = await res.json();
+        if (data.success && data.activity) {
+          setWhaleAlerts(data.activity.slice(0, 5));
+        }
+      } catch (error) {
+        console.error('Error fetching whale activity:', error);
+      }
+    };
 
+    fetchWhaleActivity();
+    const whaleInterval = setInterval(fetchWhaleActivity, 30000);
+    return () => clearInterval(whaleInterval);
+  }, []);
+
+  // Fetch market data for price ticker
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      try {
+        const res = await fetch('/api/market-data');
+        const data = await res.json();
+        if (data.success) {
+          setMarketData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching market data:', error);
+      }
+    };
+
+    fetchMarketData();
+    const marketInterval = setInterval(fetchMarketData, 60000);
+    return () => clearInterval(marketInterval);
+  }, []);
+
+  // Simulated gas price (would need actual API)
   useEffect(() => {
     const timer = setInterval(() => {
       setGasPrice((Math.random() * (15 - 8) + 8).toFixed(0));
     }, 10000);
     return () => clearInterval(timer);
   }, []);
+
+  // Build dynamic ticker items
+  const priceData = marketData?.base?.pools?.[0];
+  const currentPrice = priceData?.price ? parseFloat(priceData.price).toFixed(4) : '0.428';
+  const priceChange = priceData?.priceChange24h ? `${priceData.priceChange24h > 0 ? '+' : ''}${parseFloat(priceData.priceChange24h).toFixed(1)}%` : '+0.0%';
+  const pricePositive = priceData?.priceChange24h ? priceData.priceChange24h >= 0 : true;
+
+  const staticTickerItems = [
+    { label: 'MERC/USD', value: `$${currentPrice}`, change: priceChange, positive: pricePositive },
+    { label: 'BASE GAS', value: `${gasPrice} Gwei`, change: '', positive: true },
+    { label: 'SYS_STATUS', value: 'LIVE', change: 'v2.1', positive: true },
+  ];
+
+  // Convert whale alerts to ticker items
+  const whaleTickerItems = whaleAlerts.map(alert => ({
+    label: `🐋 ${alert.type}`,
+    value: `${alert.amount} MERC`,
+    change: `${alert.shortWallet} · ${alert.timeAgo}`,
+    positive: alert.type === 'BUY',
+    isWhale: true,
+    explorerUrl: alert.explorerUrl
+  }));
+
+  const tickerItems = [...staticTickerItems, ...whaleTickerItems];
 
   return (
     <div className="sticky top-0 z-50 w-full flex flex-col">
@@ -46,8 +101,17 @@ export function DashboardHeader({ onRefresh, isRefreshing = false }: DashboardHe
         </div>
         <div className="animate-ticker">
           {[...tickerItems, ...tickerItems].map((item, i) => (
-            <div key={i} className="flex items-center gap-4 px-8 border-r border-white/5 h-full">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{item.label}</span>
+            <div
+              key={i}
+              className={cn(
+                "flex items-center gap-4 px-8 border-r border-white/5 h-full",
+                (item as any).isWhale && "bg-yellow-500/5"
+              )}
+            >
+              <span className={cn(
+                "text-[10px] font-bold uppercase tracking-widest leading-none",
+                (item as any).isWhale ? "text-yellow-400" : "text-muted-foreground"
+              )}>{item.label}</span>
               <span className="text-[10px] font-mono font-black text-white leading-none">{item.value}</span>
               {item.change && (
                 <span className={cn(
