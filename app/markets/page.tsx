@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import DashboardHeader from '@/components/dashboard-header';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface PoolData {
   address: string;
@@ -84,12 +85,11 @@ export default function MarketsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-        <main className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 py-6">
           <div className="text-center py-12">
             <div className="text-xl text-muted-foreground">Loading market data...</div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -97,27 +97,36 @@ export default function MarketsPage() {
   if (error || !marketData) {
     return (
       <div className="min-h-screen bg-background">
-        <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-        <main className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 py-6">
           <div className="text-center py-12">
             <div className="text-xl text-red-500">{error || 'Failed to load market data'}</div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-      
-      <main className="container mx-auto px-4 py-6">
-        {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">MERC Markets & Liquidity</h1>
-          <p className="text-muted-foreground">
-            Real-time liquidity pool data across Ethereum and Base networks
-          </p>
+      <div className="container mx-auto px-6 py-6">
+        {/* Page Header with Refresh */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">MERC Markets & Liquidity</h1>
+            <p className="text-sm text-muted-foreground">
+              Real-time liquidity pool data across Ethereum and Base networks
+            </p>
+          </div>
+          <Button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
         {/* Aggregate Overview */}
@@ -182,9 +191,9 @@ export default function MarketsPage() {
         {/* Footer */}
         <div className="text-center py-6 text-muted-foreground text-sm mt-6">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <svg 
-              className="w-[30px] h-[30px]" 
-              viewBox="0 0 500 500" 
+            <svg
+              className="w-[30px] h-[30px]"
+              viewBox="0 0 500 500"
               xmlns="http://www.w3.org/2000/svg"
             >
               <circle cx="125" cy="125" r="115" fill="#BBBABC"/>
@@ -196,7 +205,7 @@ export default function MarketsPage() {
           </div>
           <p className="font-medium">Data updates in real-time from DEX subgraphs and APIs</p>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

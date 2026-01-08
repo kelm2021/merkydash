@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import DashboardHeader from '@/components/dashboard-header';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -123,12 +124,11 @@ export default function HolderMetricsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-        <main className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 py-6">
           <div className="text-center py-12">
             <div className="text-xl text-muted-foreground">Loading campaign metrics...</div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -136,13 +136,12 @@ export default function HolderMetricsPage() {
   if (error || !metrics) {
     return (
       <div className="min-h-screen bg-background">
-        <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-        <main className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 py-6">
           <div className="text-center py-12">
             <div className="text-xl text-red-500">{error || 'Failed to load campaign metrics'}</div>
             <p className="text-muted-foreground mt-2">Ensure Alchemy API key is configured in Vercel.</p>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -233,14 +232,30 @@ export default function HolderMetricsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+      <div className="container mx-auto px-6 py-6">
+        {/* Page Header with Refresh */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Wallet Holders</h1>
+            <p className="text-sm text-muted-foreground">Campaign adoption metrics since October 20, 2025</p>
+          </div>
+          <Button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
 
-      <main className="container mx-auto px-4 py-6">
         {/* Campaign Header */}
         <Card className="bg-gradient-to-r from-[#9DD7E6]/20 to-[#14B8A6]/20 border-[#9DD7E6] p-6 mb-6">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Adoption Campaign Metrics</h1>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Adoption Campaign Metrics</h2>
               <p className="text-muted-foreground">
                 Tracking new wallet acquisition and retention since campaign launch
               </p>
@@ -549,7 +564,7 @@ export default function HolderMetricsPage() {
           </div>
           <p className="font-medium">Campaign data tracked via Alchemy and Ethplorer APIs</p>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -2,8 +2,9 @@
 import type { Metadata } from 'next'
 import { Montserrat } from 'next/font/google'
 import './globals.css'
+import { Sidebar } from '@/components/sidebar'
 
-const montserrat = Montserrat({ 
+const montserrat = Montserrat({
   subsets: ['latin'],
   variable: '--font-montserrat'
 })
@@ -40,7 +41,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${montserrat.variable} font-sans antialiased`}>
-        {children}
+        <Sidebar />
+        <main className="ml-64 min-h-screen">
+          {children}
+        </main>
       </body>
     </html>
   )

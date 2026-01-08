@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import DashboardHeader from '@/components/dashboard-header';
-import { 
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
   Line
 } from 'react-chartjs-2';
 import {
@@ -129,9 +130,24 @@ export default function TokenMetricsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-      
-      <main className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-6 py-6">
+        {/* Page Header with Refresh */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Token Metrics</h1>
+            <p className="text-sm text-muted-foreground">Overview of MERC token performance</p>
+          </div>
+          <Button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
         {/* Header Card */}
         <Card className="bg-black text-white p-6 mb-6 shadow-lg">
           <div className="flex items-center justify-between flex-wrap gap-5">
@@ -271,9 +287,9 @@ export default function TokenMetricsPage() {
         {/* Footer */}
         <div className="text-center py-6 text-muted-foreground text-sm mt-6">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <svg 
-              className="w-[30px] h-[30px]" 
-              viewBox="0 0 500 500" 
+            <svg
+              className="w-[30px] h-[30px]"
+              viewBox="0 0 500 500"
               xmlns="http://www.w3.org/2000/svg"
             >
               <circle cx="125" cy="125" r="115" fill="#BBBABC"/>
@@ -286,7 +302,7 @@ export default function TokenMetricsPage() {
           <p className="font-medium mb-1">Powering Professional Crypto Trading</p>
           <p>Data updates in real-time • Multi-chain support: Ethereum & Base</p>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
