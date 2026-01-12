@@ -94,14 +94,30 @@ async function fetchCurrentTotalHolders(): Promise<{ eth: number; base: number }
     const r = await fetch(`https://api.ethplorer.io/getTokenInfo/${ETH_CONTRACT}?apiKey=freekey`, { next: { revalidate: 300 } });
     if (r.ok) ethHolders = (await r.json()).holdersCount || 0;
   } catch {}
-  // Fetch BASE holders from Blockscout API (free, no key required)
+  // Fetch BASE holders from Moralis API
   try {
-    const r = await fetch(`https://base.blockscout.com/api/v2/tokens/${BASE_CONTRACT}`, { next: { revalidate: 300 } });
-    if (r.ok) {
-      const d = await r.json();
-      baseHolders = parseInt(d.holders_count || '0', 10);
+    const moralisKey = process.env.MORALIS_API_KEY;
+    if (moralisKey) {
+      // Use cursor-based pagination to count all holders
+      let cursor: string | null = null; let pages = 0;
+      let totalHolders = 0;
+      do { if (++pages > 20) break;
+        const url = `https://deep-index.moralis.io/api/v2.2/erc20/${BASE_CONTRACT}/owners?chain=base&limit=100${cursor ? `&cursor=${cursor}` : ''}`;
+        const r = await fetch(url, {
+          headers: { 'X-API-Key': moralisKey },
+          next: { revalidate: 300 }
+        });
+        if (r.ok) {
+          const d = await r.json();
+          totalHolders += d.result?.length || 0;
+          cursor = d.cursor;
+        } else {
+          break;
+        }
+      } while (cursor);
+      baseHolders = totalHolders;
     }
-  } catch {}
+  } catch (e) { console.error('Moralis BASE holders error:', e); }
   return { eth: ethHolders, base: baseHolders };
 }
 
