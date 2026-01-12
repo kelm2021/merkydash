@@ -72,7 +72,7 @@ async function fetchDuneQueryResult(queryId: string): Promise<number> {
     const data = await response.json();
     if (data.result?.rows?.[0]) {
       const row = data.result.rows[0];
-      return row.holder_count || row.holders || row.count || Object.values(row)[0] || 0;
+      return row.eth_holder_count || row.base_holder_count || row.holder_count || row.holders || row.count || Object.values(row)[0] || 0;
     }
     return 0;
   } catch { return 0; }
@@ -94,11 +94,12 @@ async function fetchCurrentTotalHolders(): Promise<{ eth: number; base: number }
     const r = await fetch(`https://api.ethplorer.io/getTokenInfo/${ETH_CONTRACT}?apiKey=freekey`, { next: { revalidate: 300 } });
     if (r.ok) ethHolders = (await r.json()).holdersCount || 0;
   } catch {}
+  // Fetch BASE holders from Blockscout API (free, no key required)
   try {
-    const r = await fetch(`https://api.basescan.org/api?module=token&action=tokeninfo&contractaddress=${BASE_CONTRACT}&apikey=${process.env.BASESCAN_API_KEY || ''}`, { next: { revalidate: 300 } });
+    const r = await fetch(`https://base.blockscout.com/api/v2/tokens/${BASE_CONTRACT}`, { next: { revalidate: 300 } });
     if (r.ok) {
       const d = await r.json();
-      if (d.status === '1' && d.result?.[0]) baseHolders = parseInt(d.result[0].holdersCount || '0', 10);
+      baseHolders = parseInt(d.holders_count || '0', 10);
     }
   } catch {}
   return { eth: ethHolders, base: baseHolders };
