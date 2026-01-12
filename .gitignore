@@ -46,3 +46,4 @@ scripts/fix-*.ts
 # Database
 *.db
 *.db-journal
+tmpclaude-*
