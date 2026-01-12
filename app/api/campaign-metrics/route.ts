@@ -18,6 +18,48 @@ const ALCHEMY_BASE_URL = 'https://base-mainnet.g.alchemy.com/v2/LTmMDP4PPx-RyoB7
 const BASELINE_ETH_HOLDERS = 2617;
 const BASELINE_BASE_HOLDERS = 625;
 
+// Known DEX contract addresses
+const DEX_ADDRESSES = new Set([
+  '0x52cee6aa2d53882ac1f3497c563f0439fc178744',
+  '0x99543a3dcf169c8e442cc5ba1cb978ff1df2a8be',
+  '0x9c80da2f970df28d833f5349aeb68301cdf3ecf9',
+  '0xe592427a0aece92de3edee1f18e0157c05861564',
+  '0x2626664c2603336e57b271c5c0b26f421741e481',
+  '0xcf77a3ba9a5ca399b7c97c74d54e5b1beb874e43',
+  '0x0000000000000000000000000000000000000000',
+].map(addr => addr.toLowerCase()));
+
+interface NewWallet {
+  address: string;
+  shortAddress: string;
+  chain: string;
+  firstAcquisitionDate: string;
+  firstAcquisitionTimestamp: number;
+  daysSinceAcquisition: number;
+  acquisitionMethod: 'Bought' | 'Received' | 'Mixed';
+  totalAcquired: number;
+  currentBalance: number;
+  totalSold: number;
+  retentionRate: number;
+  status: 'Holding' | 'Partial Exit' | 'Full Exit';
+  heldOver20Days: boolean;
+  explorerUrl: string;
+}
+
+interface WeeklyData {
+  weekStart: string;
+  weekEnd: string;
+  newWallets: number;
+  totalAcquired: number;
+  avgAcquired: number;
+}
+
+interface HolderSnapshot {
+  baseline: { eth: number; base: number; total: number };
+  current: { eth: number; base: number; total: number };
+  growth: { absolute: number; percentage: number; dailyRate: number };
+}
+
 // Return hardcoded baseline holder counts
 async function fetchBaselineHolderCounts(): Promise<{ eth: number; base: number }> {
   return { eth: BASELINE_ETH_HOLDERS, base: BASELINE_BASE_HOLDERS };
