@@ -13,84 +13,14 @@ const BASE_CONTRACT = '0x8923947EAfaf4aD68F1f0C9eb5463eC876D79058';
 const ALCHEMY_ETH_URL = 'https://eth-mainnet.g.alchemy.com/v2/LTmMDP4PPx-RyoB76oYUH';
 const ALCHEMY_BASE_URL = 'https://base-mainnet.g.alchemy.com/v2/LTmMDP4PPx-RyoB76oYUH';
 
-// Campaign start blocks (Oct 20, 2025 00:00 UTC)
-const ETH_CAMPAIGN_START_BLOCK = '0x140A2E8'; // 21003064
-const BASE_CAMPAIGN_START_BLOCK = '0x145402F'; // 21296527
+// Baseline holder counts at campaign start (Oct 20, 2025)
+// These are hardcoded as they represent a fixed point in time
+const BASELINE_ETH_HOLDERS = 2617;
+const BASELINE_BASE_HOLDERS = 625;
 
-// Calculate baseline holders from transfer history up to campaign start
-async function fetchBaselineHolders(
-  alchemyUrl: string,
-  contractAddress: string,
-  toBlock: string
-): Promise<number> {
-  const balances = new Map<string, number>();
-  let pageKey: string | undefined;
-  let pages = 0;
-  
-  try {
-    do {
-      if (++pages > 100) break; // Safety limit
-      
-      const response = await fetch(alchemyUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'alchemy_getAssetTransfers',
-          params: [{
-            fromBlock: '0x0',
-            toBlock: toBlock,
-            contractAddresses: [contractAddress],
-            category: ['erc20'],
-            maxCount: '0x3E8',
-            withMetadata: false,
-            pageKey: pageKey
-          }]
-        }),
-        next: { revalidate: 86400 } // Cache for 24h since historical data doesn't change
-      });
-      
-      if (!response.ok) break;
-      const data = await response.json();
-      if (!data.result?.transfers) break;
-      
-      // Process transfers to calculate balances
-      for (const tx of data.result.transfers) {
-        const from = tx.from?.toLowerCase();
-        const to = tx.to?.toLowerCase();
-        const value = tx.value || 0;
-        
-        if (from && from !== '0x0000000000000000000000000000000000000000') {
-          balances.set(from, (balances.get(from) || 0) - value);
-        }
-        if (to && to !== '0x0000000000000000000000000000000000000000') {
-          balances.set(to, (balances.get(to) || 0) + value);
-        }
-      }
-      
-      pageKey = data.result.pageKey;
-    } while (pageKey);
-    
-    // Count addresses with positive balance
-    let holders = 0;
-    for (const balance of balances.values()) {
-      if (balance > 0) holders++;
-    }
-    return holders;
-  } catch (e) {
-    console.error('Error fetching baseline holders:', e);
-    return 0;
-  }
-}
-
-// Fetch baseline holder counts from both chains
+// Return hardcoded baseline holder counts
 async function fetchBaselineHolderCounts(): Promise<{ eth: number; base: number }> {
-  const [eth, base] = await Promise.all([
-    fetchBaselineHolders(ALCHEMY_ETH_URL, ETH_CONTRACT, ETH_CAMPAIGN_START_BLOCK),
-    fetchBaselineHolders(ALCHEMY_BASE_URL, BASE_CONTRACT, BASE_CAMPAIGN_START_BLOCK)
-  ]);
-  return { eth, base };
+  return { eth: BASELINE_ETH_HOLDERS, base: BASELINE_BASE_HOLDERS };
 }
 
 // Fetch current total holder counts using Moralis API
