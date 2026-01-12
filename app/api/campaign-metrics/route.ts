@@ -13,76 +13,82 @@ const BASE_CONTRACT = '0x8923947EAfaf4aD68F1f0C9eb5463eC876D79058';
 const ALCHEMY_ETH_URL = 'https://eth-mainnet.g.alchemy.com/v2/LTmMDP4PPx-RyoB76oYUH';
 const ALCHEMY_BASE_URL = 'https://base-mainnet.g.alchemy.com/v2/LTmMDP4PPx-RyoB76oYUH';
 
-// Dune Analytics API for baseline holder snapshots
-const DUNE_API_KEY = process.env.DUNE_API_KEY;
-const DUNE_ETH_QUERY_ID = '6513390';
-const DUNE_BASE_QUERY_ID = '6513410';
+// Campaign start blocks (Oct 20, 2025 00:00 UTC)
+const ETH_CAMPAIGN_START_BLOCK = '0x140A2E8'; // 21003064
+const BASE_CAMPAIGN_START_BLOCK = '0x145402F'; // 21296527
 
-// Known DEX contract addresses
-const DEX_ADDRESSES = new Set([
-  '0x52cee6aa2d53882ac1f3497c563f0439fc178744',
-  '0x99543a3dcf169c8e442cc5ba1cb978ff1df2a8be',
-  '0x9c80da2f970df28d833f5349aeb68301cdf3ecf9',
-  '0xe592427a0aece92de3edee1f18e0157c05861564',
-  '0x2626664c2603336e57b271c5c0b26f421741e481',
-  '0xcf77a3ba9a5ca399b7c97c74d54e5b1beb874e43',
-  '0x0000000000000000000000000000000000000000',
-].map(addr => addr.toLowerCase()));
-
-interface NewWallet {
-  address: string;
-  shortAddress: string;
-  chain: string;
-  firstAcquisitionDate: string;
-  firstAcquisitionTimestamp: number;
-  daysSinceAcquisition: number;
-  acquisitionMethod: 'Bought' | 'Received' | 'Mixed';
-  totalAcquired: number;
-  currentBalance: number;
-  totalSold: number;
-  retentionRate: number;
-  status: 'Holding' | 'Partial Exit' | 'Full Exit';
-  heldOver20Days: boolean;
-  explorerUrl: string;
-}
-
-interface WeeklyData {
-  weekStart: string;
-  weekEnd: string;
-  newWallets: number;
-  totalAcquired: number;
-  avgAcquired: number;
-}
-
-interface HolderSnapshot {
-  baseline: { eth: number; base: number; total: number };
-  current: { eth: number; base: number; total: number };
-  growth: { absolute: number; percentage: number; dailyRate: number };
-}
-
-// Fetch baseline holder count from a Dune query
-async function fetchDuneQueryResult(queryId: string): Promise<number> {
-  if (!DUNE_API_KEY) return 0;
+// Calculate baseline holders from transfer history up to campaign start
+async function fetchBaselineHolders(
+  alchemyUrl: string,
+  contractAddress: string,
+  toBlock: string
+): Promise<number> {
+  const balances = new Map<string, number>();
+  let pageKey: string | undefined;
+  let pages = 0;
+  
   try {
-    const response = await fetch(`https://api.dune.com/api/v1/query/${queryId}/results`, {
-      headers: { 'X-Dune-API-Key': DUNE_API_KEY },
-      next: { revalidate: 3600 }
-    });
-    if (!response.ok) return 0;
-    const data = await response.json();
-    if (data.result?.rows?.[0]) {
-      const row = data.result.rows[0];
-      return row.eth_holder_count || row.base_holder_count || row.holder_count || row.holders || row.count || Object.values(row)[0] || 0;
+    do {
+      if (++pages > 100) break; // Safety limit
+      
+      const response = await fetch(alchemyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'alchemy_getAssetTransfers',
+          params: [{
+            fromBlock: '0x0',
+            toBlock: toBlock,
+            contractAddresses: [contractAddress],
+            category: ['erc20'],
+            maxCount: '0x3E8',
+            withMetadata: false,
+            pageKey: pageKey
+          }]
+        }),
+        next: { revalidate: 86400 } // Cache for 24h since historical data doesn't change
+      });
+      
+      if (!response.ok) break;
+      const data = await response.json();
+      if (!data.result?.transfers) break;
+      
+      // Process transfers to calculate balances
+      for (const tx of data.result.transfers) {
+        const from = tx.from?.toLowerCase();
+        const to = tx.to?.toLowerCase();
+        const value = tx.value || 0;
+        
+        if (from && from !== '0x0000000000000000000000000000000000000000') {
+          balances.set(from, (balances.get(from) || 0) - value);
+        }
+        if (to && to !== '0x0000000000000000000000000000000000000000') {
+          balances.set(to, (balances.get(to) || 0) + value);
+        }
+      }
+      
+      pageKey = data.result.pageKey;
+    } while (pageKey);
+    
+    // Count addresses with positive balance
+    let holders = 0;
+    for (const balance of balances.values()) {
+      if (balance > 0) holders++;
     }
+    return holders;
+  } catch (e) {
+    console.error('Error fetching baseline holders:', e);
     return 0;
-  } catch { return 0; }
+  }
 }
 
-// Fetch baseline holder counts from both Dune queries
-async function fetchBaselineFromDune(): Promise<{ eth: number; base: number }> {
+// Fetch baseline holder counts from both chains
+async function fetchBaselineHolderCounts(): Promise<{ eth: number; base: number }> {
   const [eth, base] = await Promise.all([
-    fetchDuneQueryResult(DUNE_ETH_QUERY_ID),
-    fetchDuneQueryResult(DUNE_BASE_QUERY_ID)
+    fetchBaselineHolders(ALCHEMY_ETH_URL, ETH_CONTRACT, ETH_CAMPAIGN_START_BLOCK),
+    fetchBaselineHolders(ALCHEMY_BASE_URL, BASE_CONTRACT, BASE_CAMPAIGN_START_BLOCK)
   ]);
   return { eth, base };
 }
@@ -405,7 +411,7 @@ export async function GET() {
     const [transfers, currentBalances, baseline, currentTotalHolders] = await Promise.all([
       fetchAllTransfers(),
       fetchCurrentHolders(),
-      fetchBaselineFromDune(),
+      fetchBaselineHolderCounts(),
       fetchCurrentTotalHolders()
     ]);
 
