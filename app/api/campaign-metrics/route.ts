@@ -13,6 +13,11 @@ const BASE_CONTRACT = '0x8923947EAfaf4aD68F1f0C9eb5463eC876D79058';
 const ALCHEMY_ETH_URL = 'https://eth-mainnet.g.alchemy.com/v2/LTmMDP4PPx-RyoB76oYUH';
 const ALCHEMY_BASE_URL = 'https://base-mainnet.g.alchemy.com/v2/LTmMDP4PPx-RyoB76oYUH';
 
+// Dune Analytics API for baseline holder snapshots
+const DUNE_API_KEY = process.env.DUNE_API_KEY;
+const DUNE_ETH_QUERY_ID = '6513390';
+const DUNE_BASE_QUERY_ID = '6513410';
+
 // Known DEX contract addresses
 const DEX_ADDRESSES = new Set([
   '0x52cee6aa2d53882ac1f3497c563f0439fc178744',
@@ -47,6 +52,56 @@ interface WeeklyData {
   newWallets: number;
   totalAcquired: number;
   avgAcquired: number;
+}
+
+interface HolderSnapshot {
+  baseline: { eth: number; base: number; total: number };
+  current: { eth: number; base: number; total: number };
+  growth: { absolute: number; percentage: number; dailyRate: number };
+}
+
+// Fetch baseline holder count from a Dune query
+async function fetchDuneQueryResult(queryId: string): Promise<number> {
+  if (!DUNE_API_KEY) return 0;
+  try {
+    const response = await fetch(`https://api.dune.com/api/v1/query/${queryId}/results`, {
+      headers: { 'X-Dune-API-Key': DUNE_API_KEY },
+      next: { revalidate: 3600 }
+    });
+    if (!response.ok) return 0;
+    const data = await response.json();
+    if (data.result?.rows?.[0]) {
+      const row = data.result.rows[0];
+      return row.holder_count || row.holders || row.count || Object.values(row)[0] || 0;
+    }
+    return 0;
+  } catch { return 0; }
+}
+
+// Fetch baseline holder counts from both Dune queries
+async function fetchBaselineFromDune(): Promise<{ eth: number; base: number }> {
+  const [eth, base] = await Promise.all([
+    fetchDuneQueryResult(DUNE_ETH_QUERY_ID),
+    fetchDuneQueryResult(DUNE_BASE_QUERY_ID)
+  ]);
+  return { eth, base };
+}
+
+// Fetch current total holder counts
+async function fetchCurrentTotalHolders(): Promise<{ eth: number; base: number }> {
+  let ethHolders = 0, baseHolders = 0;
+  try {
+    const r = await fetch(`https://api.ethplorer.io/getTokenInfo/${ETH_CONTRACT}?apiKey=freekey`, { next: { revalidate: 300 } });
+    if (r.ok) ethHolders = (await r.json()).holdersCount || 0;
+  } catch {}
+  try {
+    const r = await fetch(`https://api.basescan.org/api?module=token&action=tokeninfo&contractaddress=${BASE_CONTRACT}&apikey=${process.env.BASESCAN_API_KEY || ''}`, { next: { revalidate: 300 } });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.status === '1' && d.result?.[0]) baseHolders = parseInt(d.result[0].holdersCount || '0', 10);
+    }
+  } catch {}
+  return { eth: ethHolders, base: baseHolders };
 }
 
 // Fetch token transfers from Alchemy for a specific chain
@@ -314,9 +369,11 @@ function generateWeeklyBreakdown(wallets: NewWallet[]): WeeklyData[] {
 export async function GET() {
   try {
     // Fetch transfers and current holders in parallel
-    const [transfers, currentBalances] = await Promise.all([
+    const [transfers, currentBalances, baseline, currentTotalHolders] = await Promise.all([
       fetchAllTransfers(),
-      fetchCurrentHolders()
+      fetchCurrentHolders(),
+      fetchBaselineFromDune(),
+      fetchCurrentTotalHolders()
     ]);
 
     console.log(`Fetched ${transfers.length} transfers since campaign start`);
@@ -363,6 +420,19 @@ export async function GET() {
       .sort((a, b) => b.firstAcquisitionTimestamp - a.firstAcquisitionTimestamp)
       .slice(0, 10);
 
+    // Calculate holder snapshot growth metrics
+    const baselineTotal = baseline.eth + baseline.base;
+    const currentTotal = currentTotalHolders.eth + currentTotalHolders.base;
+    const absoluteGrowth = currentTotal - baselineTotal;
+    const percentageGrowth = baselineTotal > 0 ? Math.round((absoluteGrowth / baselineTotal) * 1000) / 10 : 0;
+    const dailyRate = daysSinceCampaign > 0 ? Math.round((absoluteGrowth / daysSinceCampaign) * 10) / 10 : 0;
+
+    const holderSnapshot: HolderSnapshot = {
+      baseline: { eth: baseline.eth, base: baseline.base, total: baselineTotal },
+      current: { eth: currentTotalHolders.eth, base: currentTotalHolders.base, total: currentTotal },
+      growth: { absolute: absoluteGrowth, percentage: percentageGrowth, dailyRate: dailyRate }
+    };
+
     const metrics = {
       campaignStart: CAMPAIGN_START.toLocaleDateString('en-US', {
         month: 'long', day: 'numeric', year: 'numeric'
@@ -393,7 +463,8 @@ export async function GET() {
       acquisitionByMethod,
       weeklyBreakdown,
       topNewHolders,
-      recentNewWallets
+      recentNewWallets,
+      holderSnapshot
     };
 
     return NextResponse.json({

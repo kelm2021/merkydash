@@ -82,6 +82,11 @@ interface CampaignMetrics {
   weeklyBreakdown: WeeklyData[];
   topNewHolders: NewWallet[];
   recentNewWallets: NewWallet[];
+  holderSnapshot?: {
+    baseline: { eth: number; base: number; total: number };
+    current: { eth: number; base: number; total: number };
+    growth: { absolute: number; percentage: number; dailyRate: number };
+  };
 }
 
 export default function HolderMetricsPage() {
@@ -267,6 +272,42 @@ export default function HolderMetricsPage() {
             </div>
           </div>
         </Card>
+
+
+        {/* Holder Growth Snapshot */}
+        {metrics.holderSnapshot && metrics.holderSnapshot.baseline.total > 0 && (
+          <Card className="p-6 mb-6">
+            <h3 className="text-xl font-semibold mb-4 text-foreground">Holder Growth Snapshot</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <div className="text-xs text-muted-foreground uppercase mb-1">Campaign Start</div>
+                <div className="text-3xl font-bold text-muted-foreground">{metrics.holderSnapshot.baseline.total.toLocaleString()}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  <span className="bg-[#8B5CF6]/20 text-[#8B5CF6] px-1.5 py-0.5 rounded mr-1">{metrics.holderSnapshot.baseline.eth.toLocaleString()} ETH</span>
+                  <span className="bg-[#14B8A6]/20 text-[#14B8A6] px-1.5 py-0.5 rounded">{metrics.holderSnapshot.baseline.base.toLocaleString()} BASE</span>
+                </div>
+              </div>
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <div className="text-xs text-muted-foreground uppercase mb-1">Current Holders</div>
+                <div className="text-3xl font-bold text-[#9DD7E6]">{metrics.holderSnapshot.current.total.toLocaleString()}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  <span className="bg-[#8B5CF6]/20 text-[#8B5CF6] px-1.5 py-0.5 rounded mr-1">{metrics.holderSnapshot.current.eth.toLocaleString()} ETH</span>
+                  <span className="bg-[#14B8A6]/20 text-[#14B8A6] px-1.5 py-0.5 rounded">{metrics.holderSnapshot.current.base.toLocaleString()} BASE</span>
+                </div>
+              </div>
+              <div className="text-center p-4 bg-gradient-to-br from-green-500/10 to-[#14B8A6]/10 rounded-lg border border-green-500/30">
+                <div className="text-xs text-muted-foreground uppercase mb-1">Growth</div>
+                <div className={`text-3xl font-bold ${metrics.holderSnapshot.growth.absolute >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {metrics.holderSnapshot.growth.absolute >= 0 ? '+' : ''}{metrics.holderSnapshot.growth.absolute.toLocaleString()}
+                </div>
+                <div className={`text-sm font-semibold ${metrics.holderSnapshot.growth.percentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {metrics.holderSnapshot.growth.percentage >= 0 ? '+' : ''}{metrics.holderSnapshot.growth.percentage}%
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">~{metrics.holderSnapshot.growth.dailyRate} holders/day</div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Key Performance Indicators */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
