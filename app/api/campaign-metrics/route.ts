@@ -87,21 +87,39 @@ async function fetchBaselineFromDune(): Promise<{ eth: number; base: number }> {
   return { eth, base };
 }
 
-// Fetch current total holder counts
+// Fetch current total holder counts using Moralis API
 async function fetchCurrentTotalHolders(): Promise<{ eth: number; base: number }> {
   let ethHolders = 0, baseHolders = 0;
-  try {
-    const r = await fetch(`https://api.ethplorer.io/getTokenInfo/${ETH_CONTRACT}?apiKey=freekey`, { next: { revalidate: 300 } });
-    if (r.ok) ethHolders = (await r.json()).holdersCount || 0;
-  } catch {}
+  const moralisKey = process.env.MORALIS_API_KEY;
+  
+  // Fetch ETH holders from Moralis
+  if (moralisKey) {
+    try {
+      let cursor: string | null = null;
+      let pages = 0;
+      do {
+        if (++pages > 50) break;
+        const url = `https://deep-index.moralis.io/api/v2.2/erc20/${ETH_CONTRACT}/owners?chain=eth&limit=100${cursor ? `&cursor=${cursor}` : ''}`;
+        const r = await fetch(url, {
+          headers: { 'X-API-Key': moralisKey },
+          next: { revalidate: 300 }
+        });
+        if (r.ok) {
+          const d = await r.json();
+          ethHolders += d.result?.length || 0;
+          cursor = d.cursor;
+        } else break;
+      } while (cursor);
+    } catch (e) { console.error('Moralis ETH holders error:', e); }
+  }
   // Fetch BASE holders from Moralis API
-  try {
-    const moralisKey = process.env.MORALIS_API_KEY;
-    if (moralisKey) {
-      // Use cursor-based pagination to count all holders
-      let cursor: string | null = null; let pages = 0;
+  if (moralisKey) {
+    try {
+      let cursor: string | null = null;
+      let pages = 0;
       let totalHolders = 0;
-      do { if (++pages > 20) break;
+      do {
+        if (++pages > 20) break;
         const url = `https://deep-index.moralis.io/api/v2.2/erc20/${BASE_CONTRACT}/owners?chain=base&limit=100${cursor ? `&cursor=${cursor}` : ''}`;
         const r = await fetch(url, {
           headers: { 'X-API-Key': moralisKey },
@@ -111,13 +129,11 @@ async function fetchCurrentTotalHolders(): Promise<{ eth: number; base: number }
           const d = await r.json();
           totalHolders += d.result?.length || 0;
           cursor = d.cursor;
-        } else {
-          break;
-        }
+        } else break;
       } while (cursor);
       baseHolders = totalHolders;
-    }
-  } catch (e) { console.error('Moralis BASE holders error:', e); }
+    } catch (e) { console.error('Moralis BASE holders error:', e); }
+  }
   return { eth: ethHolders, base: baseHolders };
 }
 
