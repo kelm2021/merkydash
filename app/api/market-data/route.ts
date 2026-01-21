@@ -165,31 +165,95 @@ function calculateVWAP(ohlcvData: number[][]): number {
   return sumVolume > 0 ? sumPriceVolume / sumVolume : 0;
 }
 
-// Fetch historical OHLCV data from GeckoTerminal
-async function fetchPriceHistory() {
+// Fetch OHLCV data for a single pool from GeckoTerminal
+async function fetchPoolOHLCV(network: string, poolAddress: string, poolName: string): Promise<number[][] | null> {
   try {
-    // Use the Base Uniswap pool for price history (most liquid)
-    const url = `https://api.geckoterminal.com/api/v2/networks/base/pools/${POOLS.uniswapBase.address}/ohlcv/day?aggregate=1&limit=365`;
+    const url = `https://api.geckoterminal.com/api/v2/networks/${network}/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=365`;
 
     const response = await fetch(url, {
       headers: { 'Accept': 'application/json' },
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 3600 }
     });
 
     if (!response.ok) {
-      console.error('GeckoTerminal OHLCV API error:', response.status);
+      console.error(`GeckoTerminal OHLCV API error for ${poolName}:`, response.status);
       return null;
     }
 
     const data = await response.json();
 
     if (!data.data?.attributes?.ohlcv_list) {
-      console.error('No OHLCV data in response');
+      console.error(`No OHLCV data for ${poolName}`);
       return null;
     }
 
-    // OHLCV format: [timestamp, open, high, low, close, volume]
-    const ohlcvList = data.data.attributes.ohlcv_list;
+    console.log(`✓ Fetched OHLCV data for ${poolName}: ${data.data.attributes.ohlcv_list.length} candles`);
+    return data.data.attributes.ohlcv_list;
+  } catch (error) {
+    console.error(`Error fetching OHLCV for ${poolName}:`, error);
+    return null;
+  }
+}
+
+// Combine OHLCV data from multiple pools by timestamp
+// For each day, aggregate volume and calculate volume-weighted price
+function combineOHLCVData(allPoolsData: (number[][] | null)[]): number[][] {
+  const dataByTimestamp: Map<number, { priceVolume: number; totalVolume: number; high: number; low: number }> = new Map();
+
+  for (const poolData of allPoolsData) {
+    if (!poolData) continue;
+
+    for (const candle of poolData) {
+      const [timestamp, open, high, low, close, volume] = candle;
+      const typicalPrice = (high + low + close) / 3;
+
+      const existing = dataByTimestamp.get(timestamp);
+      if (existing) {
+        existing.priceVolume += typicalPrice * volume;
+        existing.totalVolume += volume;
+        existing.high = Math.max(existing.high, high);
+        existing.low = Math.min(existing.low, low);
+      } else {
+        dataByTimestamp.set(timestamp, {
+          priceVolume: typicalPrice * volume,
+          totalVolume: volume,
+          high,
+          low
+        });
+      }
+    }
+  }
+
+  // Convert back to OHLCV format with volume-weighted close price
+  const combined: number[][] = [];
+  for (const [timestamp, data] of dataByTimestamp) {
+    const vwapPrice = data.totalVolume > 0 ? data.priceVolume / data.totalVolume : 0;
+    // [timestamp, open, high, low, close, volume]
+    combined.push([timestamp, vwapPrice, data.high, data.low, vwapPrice, data.totalVolume]);
+  }
+
+  return combined;
+}
+
+// Fetch historical OHLCV data from all pools
+async function fetchPriceHistory() {
+  try {
+    // Fetch OHLCV data from all 3 active pools in parallel
+    const [baseUniswapData, baseAerodromeData, ethUniswapData] = await Promise.all([
+      fetchPoolOHLCV('base', POOLS.uniswapBase.address, 'Base Uniswap'),
+      fetchPoolOHLCV('base', POOLS.aerodromeBase.address, 'Base Aerodrome'),
+      fetchPoolOHLCV('eth', POOLS.uniswapEth.address, 'Ethereum Uniswap'),
+    ]);
+
+    // Combine data from all pools
+    const ohlcvList = combineOHLCVData([baseUniswapData, baseAerodromeData, ethUniswapData]);
+
+    if (ohlcvList.length === 0) {
+      console.error('No OHLCV data from any pool');
+      return null;
+    }
+
+    console.log(`✓ Combined OHLCV data: ${ohlcvList.length} days from all pools`);
 
     // Sort by timestamp descending (most recent first) for VWAP calculations
     const sortedDesc = [...ohlcvList].sort((a: number[], b: number[]) => b[0] - a[0]);
