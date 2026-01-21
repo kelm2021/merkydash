@@ -24,6 +24,28 @@ interface PoolData {
   unavailable?: boolean;
 }
 
+interface VWAPData {
+  vwap7d: number;
+  vwap30d: number;
+  vwap60d: number;
+  vwap90d: number;
+  vwap180d: number;
+  diff7d: number;
+  diff30d: number;
+  diff60d: number;
+  diff90d: number;
+  diff180d: number;
+}
+
+interface PriceHistory {
+  chartLabels: string[];
+  chartPrices: number[];
+  allTimeHigh: number;
+  allTimeLow: number;
+  currentPrice: number;
+  vwap: VWAPData;
+}
+
 interface MarketData {
   aggregate: {
     totalTVL: string;
@@ -43,6 +65,7 @@ interface MarketData {
     tvl: string;
     volume24h: string;
   };
+  priceHistory: PriceHistory;
 }
 
 export default function MarketsPage() {
@@ -135,7 +158,7 @@ export default function MarketsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard label="Total Liquidity (TVL)" value={`$${formatNumber(marketData.aggregate.totalTVL)}`} />
             <MetricCard label="24h Volume" value={`$${formatNumber(marketData.aggregate.totalVolume24h)}`} />
-            <TransactionsMetricCard 
+            <TransactionsMetricCard
               totalTransactions={marketData.aggregate.totalTransactions}
               buys={marketData.aggregate.totalBuys}
               sells={marketData.aggregate.totalSells}
@@ -143,6 +166,48 @@ export default function MarketsPage() {
             <MetricCard label="Active Pools" value={marketData.aggregate.poolCount.toString()} />
           </div>
         </Card>
+
+        {/* VWAP Price Indicators */}
+        {marketData.priceHistory?.vwap && (
+          <Card className="p-6 mb-6 border-2 border-[#9DD7E6]/30">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-foreground">VWAP Price Indicators</h2>
+              <div className="text-sm text-muted-foreground">
+                Current Price: <span className="font-bold text-[#9DD7E6]">${formatPrice(marketData.priceHistory.currentPrice)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Volume Weighted Average Price (VWAP) over different time periods. Shows the average price weighted by trading volume.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              <VWAPCard
+                period="7 Day"
+                vwap={marketData.priceHistory.vwap.vwap7d}
+                diff={marketData.priceHistory.vwap.diff7d}
+              />
+              <VWAPCard
+                period="30 Day"
+                vwap={marketData.priceHistory.vwap.vwap30d}
+                diff={marketData.priceHistory.vwap.diff30d}
+              />
+              <VWAPCard
+                period="60 Day"
+                vwap={marketData.priceHistory.vwap.vwap60d}
+                diff={marketData.priceHistory.vwap.diff60d}
+              />
+              <VWAPCard
+                period="90 Day"
+                vwap={marketData.priceHistory.vwap.vwap90d}
+                diff={marketData.priceHistory.vwap.diff90d}
+              />
+              <VWAPCard
+                period="180 Day"
+                vwap={marketData.priceHistory.vwap.vwap180d}
+                diff={marketData.priceHistory.vwap.diff180d}
+              />
+            </div>
+          </Card>
+        )}
 
         {/* Base Network Section */}
         <section className="mb-6">
@@ -355,16 +420,50 @@ function PoolCard({ pool }: { pool: PoolData }) {
   );
 }
 
+// VWAPCard Component
+function VWAPCard({ period, vwap, diff }: { period: string; vwap: number; diff: number }) {
+  const isPositive = diff >= 0;
+  const diffColor = isPositive ? 'text-green-500' : 'text-red-500';
+  const diffPrefix = isPositive ? '+' : '';
+
+  return (
+    <Card className="p-4 border shadow-sm">
+      <div className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">
+        {period} VWAP
+      </div>
+      <div className="text-lg font-bold text-foreground mb-1">
+        ${formatPrice(vwap)}
+      </div>
+      <div className={`text-xs font-semibold ${diffColor}`}>
+        {diffPrefix}{diff.toFixed(2)}% vs current
+      </div>
+    </Card>
+  );
+}
+
+// Helper function to format prices with appropriate decimals
+function formatPrice(value: number): string {
+  if (isNaN(value) || value === 0) return '0.00';
+
+  if (value < 0.01) {
+    return value.toFixed(6);
+  } else if (value < 1) {
+    return value.toFixed(4);
+  } else {
+    return value.toFixed(2);
+  }
+}
+
 // Helper function to format numbers
 function formatNumber(value: string | number): string {
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(num)) return '0';
-  
+
   if (num >= 1000000) {
     return (num / 1000000).toFixed(2) + 'M';
   } else if (num >= 1000) {
     return (num / 1000).toFixed(2) + 'K';
   }
-  
+
   return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }

@@ -146,6 +146,25 @@ async function fetchPoolData(poolConfig: any) {
   }
 }
 
+// Calculate VWAP for a given period of OHLCV data
+// VWAP = Sum(Typical Price * Volume) / Sum(Volume)
+// Typical Price = (High + Low + Close) / 3
+function calculateVWAP(ohlcvData: number[][]): number {
+  if (!ohlcvData || ohlcvData.length === 0) return 0;
+
+  let sumPriceVolume = 0;
+  let sumVolume = 0;
+
+  ohlcvData.forEach((candle: number[]) => {
+    const [, , high, low, close, volume] = candle;
+    const typicalPrice = (high + low + close) / 3;
+    sumPriceVolume += typicalPrice * volume;
+    sumVolume += volume;
+  });
+
+  return sumVolume > 0 ? sumPriceVolume / sumVolume : 0;
+}
+
 // Fetch historical OHLCV data from GeckoTerminal
 async function fetchPriceHistory() {
   try {
@@ -172,7 +191,17 @@ async function fetchPriceHistory() {
     // OHLCV format: [timestamp, open, high, low, close, volume]
     const ohlcvList = data.data.attributes.ohlcv_list;
 
-    // Sort by timestamp ascending
+    // Sort by timestamp descending (most recent first) for VWAP calculations
+    const sortedDesc = [...ohlcvList].sort((a: number[], b: number[]) => b[0] - a[0]);
+
+    // Calculate VWAP for different periods
+    const vwap7d = calculateVWAP(sortedDesc.slice(0, 7));
+    const vwap30d = calculateVWAP(sortedDesc.slice(0, 30));
+    const vwap60d = calculateVWAP(sortedDesc.slice(0, 60));
+    const vwap90d = calculateVWAP(sortedDesc.slice(0, 90));
+    const vwap180d = calculateVWAP(sortedDesc.slice(0, 180));
+
+    // Sort by timestamp ascending for chart data
     ohlcvList.sort((a: number[], b: number[]) => a[0] - b[0]);
 
     // Extract prices and calculate ATH/ATL
@@ -215,12 +244,27 @@ async function fetchPriceHistory() {
       chartPrices.push(avgPrice);
     });
 
+    const currentPrice = priceHistory.length > 0 ? priceHistory[priceHistory.length - 1].price : 0;
+
     return {
       chartLabels,
       chartPrices,
       allTimeHigh,
       allTimeLow: allTimeLow === Infinity ? 0 : allTimeLow,
-      currentPrice: priceHistory.length > 0 ? priceHistory[priceHistory.length - 1].price : 0
+      currentPrice,
+      vwap: {
+        vwap7d,
+        vwap30d,
+        vwap60d,
+        vwap90d,
+        vwap180d,
+        // Calculate % difference from current price
+        diff7d: currentPrice > 0 ? ((currentPrice - vwap7d) / vwap7d) * 100 : 0,
+        diff30d: currentPrice > 0 ? ((currentPrice - vwap30d) / vwap30d) * 100 : 0,
+        diff60d: currentPrice > 0 ? ((currentPrice - vwap60d) / vwap60d) * 100 : 0,
+        diff90d: currentPrice > 0 ? ((currentPrice - vwap90d) / vwap90d) * 100 : 0,
+        diff180d: currentPrice > 0 ? ((currentPrice - vwap180d) / vwap180d) * 100 : 0,
+      }
     };
   } catch (error) {
     console.error('Error fetching price history:', error);
@@ -286,7 +330,19 @@ export async function GET() {
         chartPrices: [],
         allTimeHigh: 0,
         allTimeLow: 0,
-        currentPrice: 0
+        currentPrice: 0,
+        vwap: {
+          vwap7d: 0,
+          vwap30d: 0,
+          vwap60d: 0,
+          vwap90d: 0,
+          vwap180d: 0,
+          diff7d: 0,
+          diff30d: 0,
+          diff60d: 0,
+          diff90d: 0,
+          diff180d: 0
+        }
       }
     });
   } catch (error) {
