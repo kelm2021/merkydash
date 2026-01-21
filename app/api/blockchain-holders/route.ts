@@ -81,7 +81,7 @@ async function fetchBaseHolders() {
     const moralisApiKey = process.env.MORALIS_API_KEY;
 
     if (!moralisApiKey) {
-      return await fetchBaseHoldersFromBasescan();
+      return await fetchBaseHoldersFromBlockscout();
     }
 
     const url = `https://deep-index.moralis.io/api/v2.2/erc20/${BASE_CONTRACT}/owners?chain=base&order=DESC&limit=50`;
@@ -95,14 +95,14 @@ async function fetchBaseHolders() {
 
     if (!response.ok) {
       console.error('Moralis API error:', response.status);
-      return await fetchBaseHoldersFromBasescan();
+      return await fetchBaseHoldersFromBlockscout();
     }
 
     const data = await response.json();
 
     if (!data.result || !Array.isArray(data.result)) {
       console.error('Moralis API response error:', data);
-      return await fetchBaseHoldersFromBasescan();
+      return await fetchBaseHoldersFromBlockscout();
     }
 
     return data.result.map((holder: any) => {
@@ -126,40 +126,40 @@ async function fetchBaseHolders() {
     });
   } catch (error) {
     console.error('Error fetching Base holders:', error);
-    return await fetchBaseHoldersFromBasescan();
+    return await fetchBaseHoldersFromBlockscout();
   }
 }
 
-// Fallback: fetch Base holders from Basescan API
-async function fetchBaseHoldersFromBasescan() {
+// Fallback: fetch Base holders from Blockscout API
+async function fetchBaseHoldersFromBlockscout() {
   try {
-    const url = `https://api.basescan.org/api?module=token&action=tokenholderlist&contractaddress=${BASE_CONTRACT}&page=1&offset=50`;
+    const url = `https://base.blockscout.com/api/v2/tokens/${BASE_CONTRACT}/holders?items_count=50`;
     const response = await fetch(url, {
       headers: { 'Accept': 'application/json' },
       next: { revalidate: 300 }
     });
 
     if (!response.ok) {
-      console.error('Basescan API error:', response.status);
+      console.error('Blockscout API error:', response.status);
       return [];
     }
 
     const data = await response.json();
 
-    if (data.status !== '1' || !data.result) {
-      console.error('Basescan API response error:', data.message);
+    if (!data.items || !Array.isArray(data.items)) {
+      console.error('Blockscout API response error:', data);
       return [];
     }
 
-    return data.result.map((holder: any) => {
-      const balanceNum = parseFloat(holder.TokenHolderQuantity) / 1e18;
-      const address = holder.TokenHolderAddress;
+    return data.items.map((holder: any) => {
+      const balanceNum = parseFloat(holder.value) / 1e18;
+      const address = holder.address?.hash || '';
       const knownInfo = getKnownWalletInfo(address);
 
       return {
         address: address.toLowerCase(),
         shortAddress: `${address.slice(0, 6)}...${address.slice(-4)}`,
-        balance: holder.TokenHolderQuantity,
+        balance: holder.value,
         balanceNum: balanceNum,
         balanceFormatted: balanceNum.toLocaleString(undefined, { maximumFractionDigits: 0 }),
         chain: 'BASE',
@@ -171,7 +171,7 @@ async function fetchBaseHoldersFromBasescan() {
       };
     });
   } catch (error) {
-    console.error('Error fetching Base holders from Basescan:', error);
+    console.error('Error fetching Base holders from Blockscout:', error);
     return [];
   }
 }
