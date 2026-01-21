@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Users, TrendingUp, Calendar, Target, Wallet, ArrowUpRight, ArrowDownRight, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Chart as ChartJS,
@@ -128,10 +128,14 @@ export default function HolderMetricsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-6 py-6">
-          <div className="text-center py-12">
-            <div className="text-xl text-muted-foreground">Loading campaign metrics...</div>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-[#9DD7E6]/5">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-[#9DD7E6]/20 rounded-full"></div>
+              <div className="w-16 h-16 border-4 border-[#9DD7E6] border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+            </div>
+            <p className="mt-6 text-lg text-muted-foreground font-medium">Loading campaign metrics...</p>
           </div>
         </div>
       </div>
@@ -140,18 +144,23 @@ export default function HolderMetricsPage() {
 
   if (error || !metrics) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-6 py-6">
-          <div className="text-center py-12">
-            <div className="text-xl text-red-500">{error || 'Failed to load campaign metrics'}</div>
-            <p className="text-muted-foreground mt-2">Ensure Alchemy API key is configured in Vercel.</p>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-[#9DD7E6]/5">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl">⚠️</span>
+            </div>
+            <p className="text-lg text-red-500 font-medium">{error || 'Failed to load campaign metrics'}</p>
+            <p className="text-muted-foreground mt-2 text-sm">Ensure Alchemy API key is configured in Vercel.</p>
+            <Button onClick={fetchData} variant="outline" className="mt-4">
+              Try Again
+            </Button>
           </div>
         </div>
       </div>
     );
   }
 
-  // Weekly new wallets chart
   const weeklyWalletsData = {
     labels: metrics.weeklyBreakdown.map(w => w.weekStart),
     datasets: [{
@@ -159,11 +168,11 @@ export default function HolderMetricsPage() {
       data: metrics.weeklyBreakdown.map(w => w.newWallets),
       backgroundColor: '#9DD7E6',
       borderColor: '#9DD7E6',
-      borderWidth: 2
+      borderWidth: 2,
+      borderRadius: 6
     }]
   };
 
-  // Weekly acquisition volume chart
   const weeklyVolumeData = {
     labels: metrics.weeklyBreakdown.map(w => w.weekStart),
     datasets: [{
@@ -177,7 +186,6 @@ export default function HolderMetricsPage() {
     }]
   };
 
-  // Retention status doughnut
   const retentionData = {
     labels: ['Still Holding', 'Partial Exit', 'Full Exit'],
     datasets: [{
@@ -191,7 +199,6 @@ export default function HolderMetricsPage() {
     }]
   };
 
-  // Acquisition method doughnut
   const acquisitionData = {
     labels: ['Bought on DEX', 'Received Transfer', 'Mixed'],
     datasets: [{
@@ -200,7 +207,7 @@ export default function HolderMetricsPage() {
         metrics.acquisitionByMethod.received,
         metrics.acquisitionByMethod.mixed
       ],
-      backgroundColor: ['#9DD7E6', '#8B5CF6', '#F59E0B'],
+      backgroundColor: ['#9DD7E6', '#627EEA', '#F59E0B'],
       borderWidth: 0
     }]
   };
@@ -230,187 +237,223 @@ export default function HolderMetricsPage() {
     plugins: {
       legend: {
         position: 'bottom' as const,
-        labels: { color: '#8F9194', padding: 15 }
+        labels: { color: '#8F9194', padding: 15, font: { size: 11 } }
       }
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-6">
-        {/* Page Header with Refresh */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Wallet Holders</h1>
-            <p className="text-sm text-muted-foreground">Campaign adoption metrics since October 20, 2025</p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-[#9DD7E6]/5">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Hero Header */}
+        <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-[#414042] via-[#414042] to-[#414042]/90 p-8 shadow-xl">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5REQ3RTYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
+          <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-[#9DD7E6]/20 flex items-center justify-center">
+                <Users className="w-7 h-7 text-[#9DD7E6]" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Wallet Holders</h1>
+                <p className="text-[#B8BABC] text-sm mt-1">
+                  Campaign adoption metrics since October 20, 2025
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="bg-[#9DD7E6] hover:bg-[#9DD7E6]/90 text-[#414042] font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+            </Button>
           </div>
-          <Button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+
+          {/* Campaign Info Badge */}
+          <div className="mt-6 inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full px-5 py-2.5">
+            <Calendar className="w-4 h-4 text-[#9DD7E6]" />
+            <span className="text-[#B8BABC] text-sm font-medium">Campaign Started: {metrics.campaignStart}</span>
+            <span className="text-[#9DD7E6] font-bold">{metrics.daysSinceCampaign} days active</span>
+          </div>
         </div>
-
-        {/* Campaign Header */}
-        <Card className="bg-gradient-to-r from-[#9DD7E6]/20 to-[#14B8A6]/20 border-[#9DD7E6] p-6 mb-6">
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Adoption Campaign Metrics</h2>
-              <p className="text-muted-foreground">
-                Tracking new wallet acquisition and retention since campaign launch
-              </p>
-            </div>
-            <div className="text-right bg-background/50 px-5 py-3 rounded-lg">
-              <div className="text-xs text-muted-foreground font-semibold uppercase">Campaign Started</div>
-              <div className="text-xl font-bold text-foreground">{metrics.campaignStart}</div>
-              <div className="text-sm text-[#9DD7E6] font-semibold">{metrics.daysSinceCampaign} days active</div>
-            </div>
-          </div>
-        </Card>
-
 
         {/* Holder Growth Snapshot */}
         {metrics.holderSnapshot && metrics.holderSnapshot.baseline.total > 0 && (
-          <Card className="p-6 mb-6">
-            <h3 className="text-xl font-semibold mb-4 text-foreground">Holder Growth Snapshot</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <div className="text-xs text-muted-foreground uppercase mb-1">Campaign Start</div>
-                <div className="text-3xl font-bold text-muted-foreground">{metrics.holderSnapshot.baseline.total.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  <span className="bg-[#8B5CF6]/20 text-[#8B5CF6] px-1.5 py-0.5 rounded mr-1">{metrics.holderSnapshot.baseline.eth.toLocaleString()} ETH</span>
-                  <span className="bg-[#14B8A6]/20 text-[#14B8A6] px-1.5 py-0.5 rounded">{metrics.holderSnapshot.baseline.base.toLocaleString()} BASE</span>
-                </div>
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#14B8A6] to-[#14B8A6]/70 flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-5 h-5 text-white" />
               </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <div className="text-xs text-muted-foreground uppercase mb-1">Current Holders</div>
-                <div className="text-3xl font-bold text-[#9DD7E6]">{metrics.holderSnapshot.current.total.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  <span className="bg-[#8B5CF6]/20 text-[#8B5CF6] px-1.5 py-0.5 rounded mr-1">{metrics.holderSnapshot.current.eth.toLocaleString()} ETH</span>
-                  <span className="bg-[#14B8A6]/20 text-[#14B8A6] px-1.5 py-0.5 rounded">{metrics.holderSnapshot.current.base.toLocaleString()} BASE</span>
-                </div>
-              </div>
-              <div className="text-center p-4 bg-gradient-to-br from-green-500/10 to-[#14B8A6]/10 rounded-lg border border-green-500/30">
-                <div className="text-xs text-muted-foreground uppercase mb-1">Growth</div>
-                <div className={`text-3xl font-bold ${metrics.holderSnapshot.growth.absolute >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {metrics.holderSnapshot.growth.absolute >= 0 ? '+' : ''}{metrics.holderSnapshot.growth.absolute.toLocaleString()}
-                </div>
-                <div className={`text-sm font-semibold ${metrics.holderSnapshot.growth.percentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {metrics.holderSnapshot.growth.percentage >= 0 ? '+' : ''}{metrics.holderSnapshot.growth.percentage}%
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">~{metrics.holderSnapshot.growth.dailyRate} holders/day</div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Holder Growth Snapshot</h2>
+                <p className="text-xs text-muted-foreground">Comparing campaign start to current</p>
               </div>
             </div>
-          </Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="p-5 bg-gradient-to-br from-[#B8BABC]/10 to-[#B8BABC]/5 border-0 shadow-sm">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Campaign Start</p>
+                <p className="text-3xl font-bold text-muted-foreground">{metrics.holderSnapshot.baseline.total.toLocaleString()}</p>
+                <div className="flex items-center gap-2 mt-2 text-xs">
+                  <span className="px-2 py-0.5 rounded bg-[#627EEA]/20 text-[#627EEA] font-semibold">{metrics.holderSnapshot.baseline.eth.toLocaleString()} ETH</span>
+                  <span className="px-2 py-0.5 rounded bg-[#0052FF]/20 text-[#0052FF] font-semibold">{metrics.holderSnapshot.baseline.base.toLocaleString()} BASE</span>
+                </div>
+              </Card>
+              <Card className="p-5 bg-gradient-to-br from-[#9DD7E6]/10 to-[#9DD7E6]/5 border-0 shadow-sm">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Current Holders</p>
+                <p className="text-3xl font-bold text-[#9DD7E6]">{metrics.holderSnapshot.current.total.toLocaleString()}</p>
+                <div className="flex items-center gap-2 mt-2 text-xs">
+                  <span className="px-2 py-0.5 rounded bg-[#627EEA]/20 text-[#627EEA] font-semibold">{metrics.holderSnapshot.current.eth.toLocaleString()} ETH</span>
+                  <span className="px-2 py-0.5 rounded bg-[#0052FF]/20 text-[#0052FF] font-semibold">{metrics.holderSnapshot.current.base.toLocaleString()} BASE</span>
+                </div>
+              </Card>
+              <Card className={`p-5 border-0 shadow-sm ${metrics.holderSnapshot.growth.absolute >= 0 ? 'bg-gradient-to-br from-green-500/10 to-green-500/5' : 'bg-gradient-to-br from-red-500/10 to-red-500/5'}`}>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Growth</p>
+                <div className="flex items-center gap-2">
+                  {metrics.holderSnapshot.growth.absolute >= 0 ? (
+                    <ArrowUpRight className="w-6 h-6 text-green-500" />
+                  ) : (
+                    <ArrowDownRight className="w-6 h-6 text-red-500" />
+                  )}
+                  <p className={`text-3xl font-bold ${metrics.holderSnapshot.growth.absolute >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {metrics.holderSnapshot.growth.absolute >= 0 ? '+' : ''}{metrics.holderSnapshot.growth.absolute.toLocaleString()}
+                  </p>
+                </div>
+                <p className={`text-sm font-semibold mt-1 ${metrics.holderSnapshot.growth.percentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {metrics.holderSnapshot.growth.percentage >= 0 ? '+' : ''}{metrics.holderSnapshot.growth.percentage}% (~{metrics.holderSnapshot.growth.dailyRate}/day)
+                </p>
+              </Card>
+            </div>
+          </div>
         )}
 
         {/* Key Performance Indicators */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <KPICard
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard
+            icon={<Users className="w-5 h-5" />}
             label="New Wallets"
             value={metrics.totalNewWallets.toLocaleString()}
             subtext={`${metrics.totalNewWalletsETH} ETH / ${metrics.totalNewWalletsBASE} BASE`}
-            color="text-[#9DD7E6]"
+            gradient="from-[#9DD7E6]/10 to-[#9DD7E6]/5"
+            iconBg="bg-[#9DD7E6]/20"
+            iconColor="text-[#9DD7E6]"
           />
-          <KPICard
+          <StatCard
+            icon={<Wallet className="w-5 h-5" />}
             label="Avg Acquisition"
-            value={`${metrics.avgAcquisitionAmount.toLocaleString()} MERC`}
+            value={`${metrics.avgAcquisitionAmount.toLocaleString()}`}
             subtext={`Median: ${metrics.medianAcquisitionAmount.toLocaleString()}`}
-            color="text-[#9DD7E6]"
+            gradient="from-[#B8BABC]/10 to-[#B8BABC]/5"
+            iconBg="bg-[#B8BABC]/20"
+            iconColor="text-[#414042]"
           />
-          <KPICard
+          <StatCard
+            icon={<Calendar className="w-5 h-5" />}
             label="Held 20+ Days"
-            value={`${metrics.walletsHeldOver20Days}`}
+            value={metrics.walletsHeldOver20Days.toString()}
             subtext={`${metrics.walletsHeldOver20DaysPercent}% of new wallets`}
-            color="text-green-500"
+            gradient="from-[#14B8A6]/10 to-[#14B8A6]/5"
+            iconBg="bg-[#14B8A6]/20"
+            iconColor="text-[#14B8A6]"
           />
-          <KPICard
-            label="Overall Retention"
+          <StatCard
+            icon={<Target className="w-5 h-5" />}
+            label="Retention Rate"
             value={`${metrics.overallRetentionRate}%`}
-            subtext={`${metrics.totalTokensRetained.toLocaleString()} of ${metrics.totalTokensAcquired.toLocaleString()} MERC`}
-            color={metrics.overallRetentionRate >= 70 ? 'text-green-500' : metrics.overallRetentionRate >= 40 ? 'text-yellow-500' : 'text-red-500'}
+            subtext={`${metrics.totalTokensRetained.toLocaleString()} MERC retained`}
+            gradient={metrics.overallRetentionRate >= 70 ? "from-green-500/10 to-green-500/5" : metrics.overallRetentionRate >= 40 ? "from-yellow-500/10 to-yellow-500/5" : "from-red-500/10 to-red-500/5"}
+            iconBg={metrics.overallRetentionRate >= 70 ? "bg-green-500/20" : metrics.overallRetentionRate >= 40 ? "bg-yellow-500/20" : "bg-red-500/20"}
+            iconColor={metrics.overallRetentionRate >= 70 ? "text-green-500" : metrics.overallRetentionRate >= 40 ? "text-yellow-500" : "text-red-500"}
           />
         </div>
 
         {/* Retention & Acquisition Breakdown */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="p-5">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">Wallet Status</h3>
-            <p className="text-xs text-muted-foreground mb-4">Current holding status of new wallets</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="p-5 border-0 shadow-sm bg-white">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-[#14B8A6]/20 flex items-center justify-center">
+                <Users className="w-4 h-4 text-[#14B8A6]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">Wallet Status</h3>
+                <p className="text-xs text-muted-foreground">Current holding status</p>
+              </div>
+            </div>
             <div className="h-[180px]">
               <Doughnut data={retentionData} options={doughnutOptions} />
             </div>
-            <div className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Still Holding:</span>
-                <span className="font-bold text-green-500">{metrics.walletsStillHolding} ({metrics.walletsStillHoldingPercent}%)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Full Exit:</span>
-                <span className="font-bold text-red-500">{metrics.walletsFullExit} ({metrics.walletsFullExitPercent}%)</span>
-              </div>
-            </div>
           </Card>
 
-          <Card className="p-5">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">Acquisition Method</h3>
-            <p className="text-xs text-muted-foreground mb-4">How new wallets obtained MERC</p>
+          <Card className="p-5 border-0 shadow-sm bg-white">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-[#9DD7E6]/20 flex items-center justify-center">
+                <Wallet className="w-4 h-4 text-[#9DD7E6]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">Acquisition Method</h3>
+                <p className="text-xs text-muted-foreground">How wallets got MERC</p>
+              </div>
+            </div>
             <div className="h-[180px]">
               <Doughnut data={acquisitionData} options={doughnutOptions} />
             </div>
-            <div className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Bought on DEX:</span>
-                <span className="font-bold text-[#9DD7E6]">{metrics.acquisitionByMethod.bought}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Received:</span>
-                <span className="font-bold text-[#8B5CF6]">{metrics.acquisitionByMethod.received}</span>
-              </div>
-            </div>
           </Card>
 
-          <Card className="p-5">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">20-Day Retention</h3>
-            <p className="text-xs text-muted-foreground mb-4">Wallets holding for 20+ days</p>
-            <div className="flex items-center justify-center h-[180px]">
-              <div className="text-center">
-                <div className="text-5xl font-bold text-[#9DD7E6]">{metrics.walletsHeldOver20DaysPercent}%</div>
-                <div className="text-muted-foreground mt-2">{metrics.walletsHeldOver20Days} wallets</div>
+          <Card className="p-5 border-0 shadow-sm bg-white">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-[#9DD7E6]/20 flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-[#9DD7E6]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">20-Day Retention</h3>
+                <p className="text-xs text-muted-foreground">Wallets holding 20+ days</p>
               </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-border">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#9DD7E6] to-[#14B8A6] rounded-full"
-                    style={{ width: `${metrics.walletsHeldOver20DaysPercent}%` }}
-                  />
-                </div>
-                <span className="text-xs text-muted-foreground">{metrics.walletsHeldOver20DaysPercent}%</span>
+            <div className="flex items-center justify-center h-[140px]">
+              <div className="text-center">
+                <p className="text-5xl font-bold text-[#9DD7E6]">{metrics.walletsHeldOver20DaysPercent}%</p>
+                <p className="text-muted-foreground text-sm mt-1">{metrics.walletsHeldOver20Days} wallets</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="h-3 bg-[#E2E3E4] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#9DD7E6] to-[#14B8A6] rounded-full transition-all duration-500"
+                  style={{ width: `${metrics.walletsHeldOver20DaysPercent}%` }}
+                />
               </div>
             </div>
           </Card>
         </div>
 
         {/* Weekly Trends */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card className="p-6">
-            <h3 className="text-xl font-semibold mb-2 text-foreground">New Wallets by Week</h3>
-            <p className="text-sm text-muted-foreground mb-4">Weekly breakdown of new wallet acquisitions</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <Card className="p-6 border-0 shadow-sm bg-white">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-[#9DD7E6]/20 flex items-center justify-center">
+                <BarChart3 className="w-4 h-4 text-[#9DD7E6]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">New Wallets by Week</h3>
+                <p className="text-xs text-muted-foreground">Weekly acquisition breakdown</p>
+              </div>
+            </div>
             <div className="h-[250px]">
               <Bar data={weeklyWalletsData} options={chartOptions} />
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h3 className="text-xl font-semibold mb-2 text-foreground">Tokens Acquired by Week</h3>
-            <p className="text-sm text-muted-foreground mb-4">Total MERC acquired by new wallets each week</p>
+          <Card className="p-6 border-0 shadow-sm bg-white">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-[#14B8A6]/20 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-[#14B8A6]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">Tokens Acquired by Week</h3>
+                <p className="text-xs text-muted-foreground">Total MERC acquired each week</p>
+              </div>
+            </div>
             <div className="h-[250px]">
               <Line data={weeklyVolumeData} options={chartOptions} />
             </div>
@@ -418,12 +461,20 @@ export default function HolderMetricsPage() {
         </div>
 
         {/* Weekly Data Table */}
-        <Card className="p-6 mb-6">
-          <h3 className="text-xl font-semibold mb-4 text-foreground">Weekly Performance Summary</h3>
-          <div className="overflow-x-auto">
+        <Card className="p-6 mb-8 border-0 shadow-sm bg-white">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-[#9DD7E6]/20 flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-[#9DD7E6]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-foreground">Weekly Performance Summary</h3>
+              <p className="text-xs text-muted-foreground">Detailed weekly breakdown</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-[#E2E3E4]">
             <table className="w-full">
               <thead>
-                <tr className="bg-muted border-b-2">
+                <tr className="bg-[#F6F6F6]">
                   <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Week</th>
                   <th className="px-4 py-3 text-right text-muted-foreground font-semibold text-xs uppercase">New Wallets</th>
                   <th className="px-4 py-3 text-right text-muted-foreground font-semibold text-xs uppercase">Total Acquired</th>
@@ -432,9 +483,9 @@ export default function HolderMetricsPage() {
               </thead>
               <tbody>
                 {metrics.weeklyBreakdown.map((week, idx) => (
-                  <tr key={idx} className="border-b hover:bg-muted/50">
+                  <tr key={idx} className="border-t border-[#E2E3E4] hover:bg-[#F6F6F6]/50">
                     <td className="px-4 py-3 font-medium">{week.weekStart} - {week.weekEnd}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-[#9DD7E6]">{week.newWallets}</td>
+                    <td className="px-4 py-3 text-right font-bold text-[#9DD7E6]">{week.newWallets}</td>
                     <td className="px-4 py-3 text-right">{week.totalAcquired.toLocaleString()} MERC</td>
                     <td className="px-4 py-3 text-right text-muted-foreground">{week.avgAcquired.toLocaleString()} MERC</td>
                   </tr>
@@ -445,98 +496,109 @@ export default function HolderMetricsPage() {
         </Card>
 
         {/* Top New Holders */}
-        <Card className="p-6 mb-6">
-          <h3 className="text-xl font-semibold mb-2 text-foreground">Top New Holders</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Largest positions among wallets that acquired MERC since campaign start
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-muted border-b-2">
-                  <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Wallet</th>
-                  <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">First Acquired</th>
-                  <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Days Held</th>
-                  <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Method</th>
-                  <th className="px-3 py-3 text-right text-muted-foreground font-semibold text-xs uppercase">Acquired</th>
-                  <th className="px-3 py-3 text-right text-muted-foreground font-semibold text-xs uppercase">Current</th>
-                  <th className="px-3 py-3 text-right text-muted-foreground font-semibold text-xs uppercase">Retention</th>
-                  <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metrics.topNewHolders.map((holder, idx) => (
-                  <tr key={idx} className="border-b hover:bg-muted/50">
-                    <td className="px-3 py-3">
-                      <a
-                        href={`${holder.explorerUrl}/address/${holder.address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#9DD7E6] font-mono text-xs hover:underline"
-                      >
-                        {holder.shortAddress}
-                      </a>
-                      <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${holder.chain === 'ETH' ? 'bg-[#8B5CF6]/20 text-[#8B5CF6]' : 'bg-[#14B8A6]/20 text-[#14B8A6]'}`}>
-                        {holder.chain}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-sm">{holder.firstAcquisitionDate}</td>
-                    <td className="px-3 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        holder.daysSinceAcquisition >= 20 ? 'bg-green-500/20 text-green-600' : 'bg-yellow-500/20 text-yellow-600'
-                      }`}>
-                        {holder.daysSinceAcquisition}d
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className={`text-xs font-medium ${
-                        holder.acquisitionMethod === 'Bought' ? 'text-[#9DD7E6]' :
-                        holder.acquisitionMethod === 'Received' ? 'text-[#8B5CF6]' : 'text-[#F59E0B]'
-                      }`}>
-                        {holder.acquisitionMethod}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-right font-mono text-sm">{holder.totalAcquired.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right font-mono text-sm font-semibold">{holder.currentBalance.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right">
-                      <span className={`font-semibold ${
-                        holder.retentionRate >= 80 ? 'text-green-500' :
-                        holder.retentionRate >= 50 ? 'text-yellow-500' : 'text-red-500'
-                      }`}>
-                        {holder.retentionRate}%
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        holder.status === 'Holding' ? 'bg-green-500/20 text-green-600' :
-                        holder.status === 'Partial Exit' ? 'bg-yellow-500/20 text-yellow-600' :
-                        'bg-red-500/20 text-red-600'
-                      }`}>
-                        {holder.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <Card className="p-6 mb-8 border-0 shadow-sm bg-white">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-[#9DD7E6]/20 flex items-center justify-center">
+              <Users className="w-4 h-4 text-[#9DD7E6]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-foreground">Top New Holders</h3>
+              <p className="text-xs text-muted-foreground">Largest positions since campaign start</p>
+            </div>
           </div>
-          {metrics.topNewHolders.length === 0 && (
+          {metrics.topNewHolders.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No holder data available. Alchemy API key may be required.
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-[#E2E3E4]">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#F6F6F6]">
+                    <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Wallet</th>
+                    <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">First Acquired</th>
+                    <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Days Held</th>
+                    <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Method</th>
+                    <th className="px-3 py-3 text-right text-muted-foreground font-semibold text-xs uppercase">Acquired</th>
+                    <th className="px-3 py-3 text-right text-muted-foreground font-semibold text-xs uppercase">Current</th>
+                    <th className="px-3 py-3 text-right text-muted-foreground font-semibold text-xs uppercase">Retention</th>
+                    <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {metrics.topNewHolders.map((holder, idx) => (
+                    <tr key={idx} className="border-t border-[#E2E3E4] hover:bg-[#F6F6F6]/50">
+                      <td className="px-3 py-3">
+                        <a
+                          href={`${holder.explorerUrl}/address/${holder.address}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#9DD7E6] font-mono text-xs hover:underline"
+                        >
+                          {holder.shortAddress}
+                        </a>
+                        <span className={`ml-2 text-xs px-1.5 py-0.5 rounded font-semibold ${holder.chain === 'ETH' ? 'bg-[#627EEA]/20 text-[#627EEA]' : 'bg-[#0052FF]/20 text-[#0052FF]'}`}>
+                          {holder.chain}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-sm">{holder.firstAcquisitionDate}</td>
+                      <td className="px-3 py-3">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          holder.daysSinceAcquisition >= 20 ? 'bg-green-500/20 text-green-600' : 'bg-yellow-500/20 text-yellow-600'
+                        }`}>
+                          {holder.daysSinceAcquisition}d
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className={`text-xs font-medium ${
+                          holder.acquisitionMethod === 'Bought' ? 'text-[#9DD7E6]' :
+                          holder.acquisitionMethod === 'Received' ? 'text-[#627EEA]' : 'text-[#F59E0B]'
+                        }`}>
+                          {holder.acquisitionMethod}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono text-sm">{holder.totalAcquired.toLocaleString()}</td>
+                      <td className="px-3 py-3 text-right font-mono text-sm font-bold">{holder.currentBalance.toLocaleString()}</td>
+                      <td className="px-3 py-3 text-right">
+                        <span className={`font-bold ${
+                          holder.retentionRate >= 80 ? 'text-green-500' :
+                          holder.retentionRate >= 50 ? 'text-yellow-500' : 'text-red-500'
+                        }`}>
+                          {holder.retentionRate}%
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          holder.status === 'Holding' ? 'bg-green-500/20 text-green-600' :
+                          holder.status === 'Partial Exit' ? 'bg-yellow-500/20 text-yellow-600' :
+                          'bg-red-500/20 text-red-600'
+                        }`}>
+                          {holder.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>
 
         {/* Recent New Wallets */}
-        <Card className="p-6 mb-6">
-          <h3 className="text-xl font-semibold mb-2 text-foreground">Recent New Wallets</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Most recent wallets to acquire MERC since campaign start
-          </p>
-          <div className="overflow-x-auto">
+        <Card className="p-6 mb-8 border-0 shadow-sm bg-white">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-[#14B8A6]/20 flex items-center justify-center">
+              <Wallet className="w-4 h-4 text-[#14B8A6]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-foreground">Recent New Wallets</h3>
+              <p className="text-xs text-muted-foreground">Most recent acquisitions since campaign start</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-[#E2E3E4]">
             <table className="w-full">
               <thead>
-                <tr className="bg-muted border-b-2">
+                <tr className="bg-[#F6F6F6]">
                   <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Wallet</th>
                   <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Acquired On</th>
                   <th className="px-3 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Days Ago</th>
@@ -547,7 +609,7 @@ export default function HolderMetricsPage() {
               </thead>
               <tbody>
                 {metrics.recentNewWallets.map((wallet, idx) => (
-                  <tr key={idx} className="border-b hover:bg-muted/50">
+                  <tr key={idx} className="border-t border-[#E2E3E4] hover:bg-[#F6F6F6]/50">
                     <td className="px-3 py-3">
                       <a
                         href={`${wallet.explorerUrl}/address/${wallet.address}`}
@@ -557,7 +619,7 @@ export default function HolderMetricsPage() {
                       >
                         {wallet.shortAddress}
                       </a>
-                      <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${wallet.chain === 'ETH' ? 'bg-[#8B5CF6]/20 text-[#8B5CF6]' : 'bg-[#14B8A6]/20 text-[#14B8A6]'}`}>
+                      <span className={`ml-2 text-xs px-1.5 py-0.5 rounded font-semibold ${wallet.chain === 'ETH' ? 'bg-[#627EEA]/20 text-[#627EEA]' : 'bg-[#0052FF]/20 text-[#0052FF]'}`}>
                         {wallet.chain}
                       </span>
                     </td>
@@ -566,7 +628,7 @@ export default function HolderMetricsPage() {
                     <td className="px-3 py-3">
                       <span className={`text-xs font-medium ${
                         wallet.acquisitionMethod === 'Bought' ? 'text-[#9DD7E6]' :
-                        wallet.acquisitionMethod === 'Received' ? 'text-[#8B5CF6]' : 'text-[#F59E0B]'
+                        wallet.acquisitionMethod === 'Received' ? 'text-[#627EEA]' : 'text-[#F59E0B]'
                       }`}>
                         {wallet.acquisitionMethod}
                       </span>
@@ -589,40 +651,53 @@ export default function HolderMetricsPage() {
         </Card>
 
         {/* Footer */}
-        <div className="text-center py-6 text-muted-foreground text-sm mt-6">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <svg
-              className="w-[30px] h-[30px]"
-              viewBox="0 0 500 500"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle cx="125" cy="125" r="115" fill="#BBBABC"/>
-              <circle cx="375" cy="125" r="115" fill="#BBBABC"/>
-              <circle cx="125" cy="375" r="115" fill="#BBBABC"/>
-              <circle cx="375" cy="375" r="115" fill="#9DD7E6"/>
-            </svg>
-            <span className="text-base font-semibold text-foreground">LIQUID MERCURY</span>
+        <footer className="mt-12 pt-8 border-t border-[#E2E3E4]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-3">
+              <svg className="w-8 h-8" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="125" cy="125" r="115" fill="#B8BABC"/>
+                <circle cx="375" cy="125" r="115" fill="#B8BABC"/>
+                <circle cx="125" cy="375" r="115" fill="#B8BABC"/>
+                <circle cx="375" cy="375" r="115" fill="#9DD7E6"/>
+              </svg>
+              <span className="text-lg font-bold text-[#414042] tracking-tight">LIQUID MERCURY</span>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Campaign data tracked via Alchemy and Ethplorer APIs
+            </p>
           </div>
-          <p className="font-medium">Campaign data tracked via Alchemy and Ethplorer APIs</p>
-        </div>
+        </footer>
       </div>
     </div>
   );
 }
 
-// KPI Card Component
-function KPICard({ label, value, subtext, color }: { label: string; value: string; subtext: string; color: string }) {
+// Stat Card Component
+function StatCard({
+  icon,
+  label,
+  value,
+  subtext,
+  gradient,
+  iconBg,
+  iconColor
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  subtext: string;
+  gradient: string;
+  iconBg: string;
+  iconColor: string;
+}) {
   return (
-    <Card className="p-5 border shadow-sm">
-      <div className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">
-        {label}
+    <Card className={`relative overflow-hidden p-5 bg-gradient-to-br ${gradient} border-0 shadow-sm hover:shadow-md transition-shadow duration-200`}>
+      <div className={`w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center mb-3`}>
+        <span className={iconColor}>{icon}</span>
       </div>
-      <div className={`text-2xl font-bold mb-1 ${color}`}>
-        {value}
-      </div>
-      <div className="text-sm text-muted-foreground">
-        {subtext}
-      </div>
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+      <p className="text-2xl font-bold text-foreground mt-1">{value}</p>
+      <p className="text-xs text-muted-foreground mt-1">{subtext}</p>
     </Card>
   );
 }
