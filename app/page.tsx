@@ -599,7 +599,8 @@ function TransactionsTab() {
 
 // Holders Tab Component
 function HoldersTab() {
-  const [holders, setHolders] = useState<any[]>([]);
+  const [knownWallets, setKnownWallets] = useState<any[]>([]);
+  const [externalHolders, setExternalHolders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -608,7 +609,8 @@ function HoldersTab() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          setHolders(data.holders);
+          setKnownWallets(data.knownWallets || []);
+          setExternalHolders(data.externalHolders || data.holders || []);
         } else {
           setError(data.error || 'Failed to load holders');
         }
@@ -641,60 +643,180 @@ function HoldersTab() {
     );
   }
 
+  // Group known wallets by category
+  const liquidityPools = knownWallets.filter(w => w.category === 'Liquidity Pool');
+  const lmControlled = knownWallets.filter(w => w.category === 'Liquid Mercury Controlled');
+
   return (
-    <>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#9DD7E6] to-[#9DD7E6]/70 flex items-center justify-center">
-          <Users className="w-5 h-5 text-white" />
-        </div>
+    <div className="space-y-8">
+      {/* Known Wallets Section */}
+      {knownWallets.length > 0 && (
         <div>
-          <h3 className="text-xl font-bold text-foreground">Top 20 Holders</h3>
-          <p className="text-xs text-muted-foreground">Combined top holders across Ethereum and Base</p>
-        </div>
-      </div>
-      {holders.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">No holders found</div>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-[#E2E3E4]">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#F6F6F6]">
-                <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Rank</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Address</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Balance</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Percentage</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain</th>
-              </tr>
-            </thead>
-            <tbody>
-              {holders.map((holder) => (
-                <tr key={holder.rank} className="border-t border-[#E2E3E4] hover:bg-[#F6F6F6]/50">
-                  <td className="px-4 py-3 font-bold text-[#9DD7E6]">{holder.rank}</td>
-                  <td className="px-4 py-3">
-                    <a
-                      href={`${holder.explorerUrl}/address/${holder.address}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#9DD7E6] font-mono text-xs hover:underline"
-                    >
-                      {holder.shortAddress}
-                    </a>
-                  </td>
-                  <td className="px-4 py-3 font-semibold">{holder.balanceFormatted}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{holder.percentage}%</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
-                      holder.chain === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#0052FF]'
-                    }`}>
-                      {holder.chain}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#9DD7E6] to-[#9DD7E6]/70 flex items-center justify-center">
+              <Wallet className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-foreground">Known Wallets</h3>
+              <p className="text-xs text-muted-foreground">Liquidity pools and Liquid Mercury controlled wallets</p>
+            </div>
+          </div>
+
+          {/* Liquidity Pools */}
+          {liquidityPools.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#14B8A6]"></span>
+                Liquidity Pools
+              </h4>
+              <div className="overflow-x-auto rounded-lg border border-[#E2E3E4]">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-[#14B8A6]/10">
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Name</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Address</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Balance</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">% of Supply</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {liquidityPools.map((wallet, idx) => (
+                      <tr key={idx} className="border-t border-[#E2E3E4] hover:bg-[#14B8A6]/5">
+                        <td className="px-4 py-3 font-semibold text-foreground">{wallet.name}</td>
+                        <td className="px-4 py-3">
+                          <a
+                            href={`${wallet.explorerUrl}/address/${wallet.address}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#9DD7E6] font-mono text-xs hover:underline"
+                          >
+                            {wallet.shortAddress}
+                          </a>
+                        </td>
+                        <td className="px-4 py-3 font-semibold">{wallet.balanceFormatted}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{wallet.percentage}%</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
+                            wallet.chain === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#0052FF]'
+                          }`}>
+                            {wallet.chain}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* LM Controlled Wallets */}
+          {lmControlled.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#8B5CF6]"></span>
+                Liquid Mercury Controlled
+              </h4>
+              <div className="overflow-x-auto rounded-lg border border-[#E2E3E4]">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-[#8B5CF6]/10">
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Name</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Address</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Balance</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">% of Supply</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lmControlled.map((wallet, idx) => (
+                      <tr key={idx} className="border-t border-[#E2E3E4] hover:bg-[#8B5CF6]/5">
+                        <td className="px-4 py-3 font-semibold text-foreground">{wallet.name}</td>
+                        <td className="px-4 py-3">
+                          <a
+                            href={`${wallet.explorerUrl}/address/${wallet.address}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#9DD7E6] font-mono text-xs hover:underline"
+                          >
+                            {wallet.shortAddress}
+                          </a>
+                        </td>
+                        <td className="px-4 py-3 font-semibold">{wallet.balanceFormatted}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{wallet.percentage}%</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
+                            wallet.chain === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#0052FF]'
+                          }`}>
+                            {wallet.chain}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
-    </>
+
+      {/* External Holders Section */}
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#9DD7E6] to-[#9DD7E6]/70 flex items-center justify-center">
+            <Users className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-foreground">Top 20 External Holders</h3>
+            <p className="text-xs text-muted-foreground">Top holders excluding known wallets across Ethereum and Base</p>
+          </div>
+        </div>
+        {externalHolders.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">No external holders found</div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-[#E2E3E4]">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#F6F6F6]">
+                  <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Rank</th>
+                  <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Address</th>
+                  <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Balance</th>
+                  <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">% of Supply</th>
+                  <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain</th>
+                </tr>
+              </thead>
+              <tbody>
+                {externalHolders.map((holder) => (
+                  <tr key={holder.rank} className="border-t border-[#E2E3E4] hover:bg-[#F6F6F6]/50">
+                    <td className="px-4 py-3 font-bold text-[#9DD7E6]">{holder.rank}</td>
+                    <td className="px-4 py-3">
+                      <a
+                        href={`${holder.explorerUrl}/address/${holder.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#9DD7E6] font-mono text-xs hover:underline"
+                      >
+                        {holder.shortAddress}
+                      </a>
+                    </td>
+                    <td className="px-4 py-3 font-semibold">{holder.balanceFormatted}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{holder.percentage}%</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
+                        holder.chain === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#0052FF]'
+                      }`}>
+                        {holder.chain}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
