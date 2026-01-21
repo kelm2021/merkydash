@@ -200,6 +200,7 @@ async function fetchPriceHistory() {
     const vwap60d = calculateVWAP(sortedDesc.slice(0, 60));
     const vwap90d = calculateVWAP(sortedDesc.slice(0, 90));
     const vwap180d = calculateVWAP(sortedDesc.slice(0, 180));
+    const vwap360d = calculateVWAP(sortedDesc.slice(0, 360));
 
     // Sort by timestamp ascending for chart data
     ohlcvList.sort((a: number[], b: number[]) => a[0] - b[0]);
@@ -258,12 +259,7 @@ async function fetchPriceHistory() {
         vwap60d,
         vwap90d,
         vwap180d,
-        // Calculate % difference from current price
-        diff7d: currentPrice > 0 ? ((currentPrice - vwap7d) / vwap7d) * 100 : 0,
-        diff30d: currentPrice > 0 ? ((currentPrice - vwap30d) / vwap30d) * 100 : 0,
-        diff60d: currentPrice > 0 ? ((currentPrice - vwap60d) / vwap60d) * 100 : 0,
-        diff90d: currentPrice > 0 ? ((currentPrice - vwap90d) / vwap90d) * 100 : 0,
-        diff180d: currentPrice > 0 ? ((currentPrice - vwap180d) / vwap180d) * 100 : 0,
+        vwap360d,
       }
     };
   } catch (error) {
@@ -337,11 +333,7 @@ export async function GET() {
           vwap60d: 0,
           vwap90d: 0,
           vwap180d: 0,
-          diff7d: 0,
-          diff30d: 0,
-          diff60d: 0,
-          diff90d: 0,
-          diff180d: 0
+          vwap360d: 0,
         }
       }
     });

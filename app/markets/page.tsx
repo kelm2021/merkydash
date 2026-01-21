@@ -30,11 +30,7 @@ interface VWAPData {
   vwap60d: number;
   vwap90d: number;
   vwap180d: number;
-  diff7d: number;
-  diff30d: number;
-  diff60d: number;
-  diff90d: number;
-  diff180d: number;
+  vwap360d: number;
 }
 
 interface PriceHistory {
@@ -179,32 +175,13 @@ export default function MarketsPage() {
             <p className="text-xs text-muted-foreground mb-4">
               Volume Weighted Average Price (VWAP) over different time periods. Shows the average price weighted by trading volume.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              <VWAPCard
-                period="7 Day"
-                vwap={marketData.priceHistory.vwap.vwap7d}
-                diff={marketData.priceHistory.vwap.diff7d}
-              />
-              <VWAPCard
-                period="30 Day"
-                vwap={marketData.priceHistory.vwap.vwap30d}
-                diff={marketData.priceHistory.vwap.diff30d}
-              />
-              <VWAPCard
-                period="60 Day"
-                vwap={marketData.priceHistory.vwap.vwap60d}
-                diff={marketData.priceHistory.vwap.diff60d}
-              />
-              <VWAPCard
-                period="90 Day"
-                vwap={marketData.priceHistory.vwap.vwap90d}
-                diff={marketData.priceHistory.vwap.diff90d}
-              />
-              <VWAPCard
-                period="180 Day"
-                vwap={marketData.priceHistory.vwap.vwap180d}
-                diff={marketData.priceHistory.vwap.diff180d}
-              />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              <VWAPCard period="7 Day" vwap={marketData.priceHistory.vwap.vwap7d} />
+              <VWAPCard period="30 Day" vwap={marketData.priceHistory.vwap.vwap30d} />
+              <VWAPCard period="60 Day" vwap={marketData.priceHistory.vwap.vwap60d} />
+              <VWAPCard period="90 Day" vwap={marketData.priceHistory.vwap.vwap90d} />
+              <VWAPCard period="180 Day" vwap={marketData.priceHistory.vwap.vwap180d} />
+              <VWAPCard period="360 Day" vwap={marketData.priceHistory.vwap.vwap360d} />
             </div>
           </Card>
         )}
@@ -421,21 +398,14 @@ function PoolCard({ pool }: { pool: PoolData }) {
 }
 
 // VWAPCard Component
-function VWAPCard({ period, vwap, diff }: { period: string; vwap: number; diff: number }) {
-  const isPositive = diff >= 0;
-  const diffColor = isPositive ? 'text-green-500' : 'text-red-500';
-  const diffPrefix = isPositive ? '+' : '';
-
+function VWAPCard({ period, vwap }: { period: string; vwap: number }) {
   return (
     <Card className="p-4 border shadow-sm">
       <div className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">
         {period} VWAP
       </div>
-      <div className="text-lg font-bold text-foreground mb-1">
+      <div className="text-lg font-bold text-foreground">
         ${formatPrice(vwap)}
-      </div>
-      <div className={`text-xs font-semibold ${diffColor}`}>
-        {diffPrefix}{diff.toFixed(2)}% vs current
       </div>
     </Card>
   );
