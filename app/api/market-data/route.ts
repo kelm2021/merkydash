@@ -9,7 +9,7 @@ const POOLS = {
     chainId: 8453,
     dex: 'Uniswap V3',
     explorerUrl: 'https://basescan.org/address/0x52cee6aa2d53882ac1f3497c563f0439fc178744',
-    dexUrl: 'https://dexscreener.com/base/0x52cee6aa2d53882ac1f3497c563f0439fc178744',
+    dexUrl: 'https://app.uniswap.org/explore/pools/base/0x52cee6aa2d53882ac1f3497c563f0439fc178744',
     tokenPair: ['MERC', 'USDC'] // Correct pair for Base
   },
   uniswapEth: {
@@ -18,7 +18,7 @@ const POOLS = {
     chainId: 1,
     dex: 'Uniswap V3',
     explorerUrl: 'https://etherscan.io/address/0x99543A3DcF169C8E442cC5ba1CB978FF1dF2a8Be',
-    dexUrl: 'https://dexscreener.com/ethereum/0x99543A3DcF169C8E442cC5ba1CB978FF1dF2a8Be',
+    dexUrl: 'https://app.uniswap.org/explore/pools/ethereum/0x99543A3DcF169C8E442cC5ba1CB978FF1dF2a8Be',
     tokenPair: ['MERC', 'USDT'] // Correct pair for Ethereum
   },
   aerodromeBase: {
