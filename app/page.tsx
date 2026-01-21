@@ -147,10 +147,10 @@ export default function TokenMetricsPage() {
         {/* Hero Header */}
         <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-[#414042] via-[#414042] to-[#414042]/90 p-8 shadow-xl">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5REQ3RTYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
-          <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center">
-                <svg className="w-10 h-10" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+          <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center">
+                <svg className="w-9 h-9" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="125" cy="125" r="115" fill="#B8BABC"/>
                   <circle cx="375" cy="125" r="115" fill="#B8BABC"/>
                   <circle cx="125" cy="375" r="115" fill="#B8BABC"/>
@@ -169,20 +169,20 @@ export default function TokenMetricsPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4">
-                <p className="text-[#B8BABC] text-xs font-medium mb-1">Current Price</p>
-                <p className="text-3xl font-bold text-[#9DD7E6]">${currentPrice.toFixed(6)}</p>
-              </div>
-              <Button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="bg-[#9DD7E6] hover:bg-[#9DD7E6]/90 text-[#414042] font-semibold shadow-lg"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
+            <Button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="bg-[#9DD7E6] hover:bg-[#9DD7E6]/90 text-[#414042] font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+            </Button>
+          </div>
+
+          {/* Current Price Badge */}
+          <div className="mt-6 inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full px-5 py-2.5">
+            <span className="text-[#B8BABC] text-sm font-medium">Current MERC Price</span>
+            <span className="text-2xl font-bold text-[#9DD7E6]">${currentPrice.toFixed(6)}</span>
           </div>
         </div>
 
