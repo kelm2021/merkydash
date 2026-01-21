@@ -22,11 +22,6 @@ const KNOWN_WALLETS: { [address: string]: { name: string; category: string; incl
   '0x99543a3dcf169c8e442cc5ba1cb978ff1df2a8be': { name: 'Uniswap (Ethereum) MERC/USDT', category: 'Liquidity Pool', includeInDashboard: true },
 };
 
-// Check if an address is a known wallet
-function isKnownWallet(address: string): boolean {
-  return address.toLowerCase() in KNOWN_WALLETS;
-}
-
 // Get known wallet info
 function getKnownWalletInfo(address: string): { name: string; category: string; includeInDashboard: boolean } | null {
   return KNOWN_WALLETS[address.toLowerCase()] || null;
@@ -54,7 +49,6 @@ async function fetchEthereumHolders() {
     }
 
     return data.holders.map((holder: any) => {
-      // Use rawBalance string for precision, convert from wei (18 decimals)
       const rawBalance = holder.rawBalance || '0';
       const balanceBigInt = BigInt(rawBalance);
       const balanceNum = Number(balanceBigInt / BigInt(1e18));
@@ -62,11 +56,11 @@ async function fetchEthereumHolders() {
       const knownInfo = getKnownWalletInfo(address);
 
       return {
-        address: address,
+        address: address.toLowerCase(),
         shortAddress: `${address.slice(0, 6)}...${address.slice(-4)}`,
         balance: rawBalance,
+        balanceNum: balanceNum,
         balanceFormatted: balanceNum.toLocaleString(),
-        percentage: holder.share ? holder.share.toFixed(2) : '0',
         chain: 'ETH',
         explorerUrl: 'https://etherscan.io',
         isKnown: !!knownInfo,
@@ -86,7 +80,6 @@ async function fetchBaseHolders() {
   try {
     const moralisApiKey = process.env.MORALIS_API_KEY;
 
-    // If no Moralis key, try Basescan API
     if (!moralisApiKey) {
       return await fetchBaseHoldersFromBasescan();
     }
@@ -113,17 +106,16 @@ async function fetchBaseHolders() {
     }
 
     return data.result.map((holder: any) => {
-      // balance_formatted is already in token units (not wei)
       const balanceNum = Math.floor(parseFloat(holder.balance_formatted || '0'));
       const address = holder.owner_address;
       const knownInfo = getKnownWalletInfo(address);
 
       return {
-        address: address,
+        address: address.toLowerCase(),
         shortAddress: `${address.slice(0, 6)}...${address.slice(-4)}`,
         balance: holder.balance,
+        balanceNum: balanceNum,
         balanceFormatted: balanceNum.toLocaleString(),
-        percentage: holder.percentage_relative_to_total_supply?.toFixed(2) || '0',
         chain: 'BASE',
         explorerUrl: 'https://basescan.org',
         isKnown: !!knownInfo,
@@ -165,9 +157,10 @@ async function fetchBaseHoldersFromBasescan() {
       const knownInfo = getKnownWalletInfo(address);
 
       return {
-        address: address,
+        address: address.toLowerCase(),
         shortAddress: `${address.slice(0, 6)}...${address.slice(-4)}`,
         balance: holder.TokenHolderQuantity,
+        balanceNum: balanceNum,
         balanceFormatted: balanceNum.toLocaleString(undefined, { maximumFractionDigits: 0 }),
         chain: 'BASE',
         explorerUrl: 'https://basescan.org',
@@ -183,6 +176,51 @@ async function fetchBaseHoldersFromBasescan() {
   }
 }
 
+// Merge wallets that exist on both chains into a single entry
+function mergeWalletsByAddress(holders: any[]): any[] {
+  const walletMap = new Map<string, any>();
+
+  for (const holder of holders) {
+    const addressLower = holder.address.toLowerCase();
+    const existing = walletMap.get(addressLower);
+
+    if (existing) {
+      // Wallet exists on both chains - merge
+      if (holder.chain === 'ETH') {
+        existing.ethBalance = holder.balanceNum;
+        existing.ethBalanceFormatted = holder.balanceFormatted;
+      } else {
+        existing.baseBalance = holder.balanceNum;
+        existing.baseBalanceFormatted = holder.balanceFormatted;
+      }
+      // Update total balance
+      existing.totalBalance = (existing.ethBalance || 0) + (existing.baseBalance || 0);
+      existing.totalBalanceFormatted = existing.totalBalance.toLocaleString();
+      existing.chains = ['ETH', 'BASE'];
+    } else {
+      // New wallet
+      const isEth = holder.chain === 'ETH';
+      walletMap.set(addressLower, {
+        address: addressLower,
+        shortAddress: holder.shortAddress,
+        ethBalance: isEth ? holder.balanceNum : 0,
+        ethBalanceFormatted: isEth ? holder.balanceFormatted : '0',
+        baseBalance: isEth ? 0 : holder.balanceNum,
+        baseBalanceFormatted: isEth ? '0' : holder.balanceFormatted,
+        totalBalance: holder.balanceNum,
+        totalBalanceFormatted: holder.balanceFormatted,
+        chains: [holder.chain],
+        isKnown: holder.isKnown,
+        name: holder.name,
+        category: holder.category,
+        includeInDashboard: holder.includeInDashboard
+      });
+    }
+  }
+
+  return Array.from(walletMap.values());
+}
+
 export async function GET() {
   try {
     // Fetch from both chains in parallel
@@ -194,32 +232,34 @@ export async function GET() {
     // Combine all holders
     const allHolders = [...ethHolders, ...baseHolders];
 
+    // Merge wallets that exist on both chains
+    const mergedWallets = mergeWalletsByAddress(allHolders);
+
     // Separate known wallets (that should be shown) from external holders
-    const knownWallets = allHolders
+    const knownWallets = mergedWallets
       .filter(h => h.isKnown && h.includeInDashboard)
-      .sort((a, b) => parseFloat(b.balance) - parseFloat(a.balance))
+      .sort((a, b) => b.totalBalance - a.totalBalance)
       .map((holder, index) => ({
         ...holder,
         rank: index + 1,
-        percentage: ((parseFloat(holder.balance) / 6e27) * 100).toFixed(2)
+        percentage: ((holder.totalBalance / 6e9) * 100).toFixed(2)
       }));
 
     // Get top 20 external holders (excluding known wallets)
-    const externalHolders = allHolders
+    const externalHolders = mergedWallets
       .filter(h => !h.isKnown)
-      .sort((a, b) => parseFloat(b.balance) - parseFloat(a.balance))
+      .sort((a, b) => b.totalBalance - a.totalBalance)
       .slice(0, 20)
       .map((holder, index) => ({
         ...holder,
         rank: index + 1,
-        percentage: ((parseFloat(holder.balance) / 6e27) * 100).toFixed(2)
+        percentage: ((holder.totalBalance / 6e9) * 100).toFixed(2)
       }));
 
     return NextResponse.json({
       success: true,
       knownWallets: knownWallets,
       externalHolders: externalHolders,
-      // Keep legacy holders array for backward compatibility
       holders: externalHolders,
       count: externalHolders.length,
       knownCount: knownWallets.length

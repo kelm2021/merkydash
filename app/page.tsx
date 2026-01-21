@@ -597,6 +597,58 @@ function TransactionsTab() {
   );
 }
 
+// Balance display component for dual-chain wallets
+function BalanceDisplay({ wallet }: { wallet: any }) {
+  const hasEth = wallet.ethBalance > 0;
+  const hasBase = wallet.baseBalance > 0;
+  const hasBoth = hasEth && hasBase;
+
+  if (hasBoth) {
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold text-white bg-[#627EEA]">ETH</span>
+          <span className="text-sm">{wallet.ethBalanceFormatted}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold text-white bg-[#0052FF]">BASE</span>
+          <span className="text-sm">{wallet.baseBalanceFormatted}</span>
+        </div>
+        <div className="flex items-center gap-2 pt-1 border-t border-[#E2E3E4]">
+          <span className="text-[10px] font-semibold text-muted-foreground">TOTAL</span>
+          <span className="text-sm font-bold">{wallet.totalBalanceFormatted}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold text-white ${hasEth ? 'bg-[#627EEA]' : 'bg-[#0052FF]'}`}>
+        {hasEth ? 'ETH' : 'BASE'}
+      </span>
+      <span className="font-semibold">{wallet.totalBalanceFormatted}</span>
+    </div>
+  );
+}
+
+// Chain badges display
+function ChainBadges({ wallet }: { wallet: any }) {
+  const hasEth = wallet.ethBalance > 0;
+  const hasBase = wallet.baseBalance > 0;
+
+  return (
+    <div className="flex items-center gap-1">
+      {hasEth && (
+        <span className="px-2 py-1 rounded text-xs font-semibold text-white bg-[#627EEA]">ETH</span>
+      )}
+      {hasBase && (
+        <span className="px-2 py-1 rounded text-xs font-semibold text-white bg-[#0052FF]">BASE</span>
+      )}
+    </div>
+  );
+}
+
 // Holders Tab Component
 function HoldersTab() {
   const [knownWallets, setKnownWallets] = useState<any[]>([]);
@@ -677,7 +729,7 @@ function HoldersTab() {
                       <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Address</th>
                       <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Balance</th>
                       <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">% of Supply</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain(s)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -686,7 +738,7 @@ function HoldersTab() {
                         <td className="px-4 py-3 font-semibold text-foreground">{wallet.name}</td>
                         <td className="px-4 py-3">
                           <a
-                            href={`${wallet.explorerUrl}/address/${wallet.address}`}
+                            href={`https://etherscan.io/address/${wallet.address}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[#9DD7E6] font-mono text-xs hover:underline"
@@ -694,14 +746,12 @@ function HoldersTab() {
                             {wallet.shortAddress}
                           </a>
                         </td>
-                        <td className="px-4 py-3 font-semibold">{wallet.balanceFormatted}</td>
+                        <td className="px-4 py-3">
+                          <BalanceDisplay wallet={wallet} />
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground">{wallet.percentage}%</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
-                            wallet.chain === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#0052FF]'
-                          }`}>
-                            {wallet.chain}
-                          </span>
+                          <ChainBadges wallet={wallet} />
                         </td>
                       </tr>
                     ))}
@@ -726,7 +776,7 @@ function HoldersTab() {
                       <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Address</th>
                       <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Balance</th>
                       <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">% of Supply</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain</th>
+                      <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain(s)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -735,7 +785,7 @@ function HoldersTab() {
                         <td className="px-4 py-3 font-semibold text-foreground">{wallet.name}</td>
                         <td className="px-4 py-3">
                           <a
-                            href={`${wallet.explorerUrl}/address/${wallet.address}`}
+                            href={`https://etherscan.io/address/${wallet.address}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[#9DD7E6] font-mono text-xs hover:underline"
@@ -743,14 +793,12 @@ function HoldersTab() {
                             {wallet.shortAddress}
                           </a>
                         </td>
-                        <td className="px-4 py-3 font-semibold">{wallet.balanceFormatted}</td>
+                        <td className="px-4 py-3">
+                          <BalanceDisplay wallet={wallet} />
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground">{wallet.percentage}%</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
-                            wallet.chain === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#0052FF]'
-                          }`}>
-                            {wallet.chain}
-                          </span>
+                          <ChainBadges wallet={wallet} />
                         </td>
                       </tr>
                     ))}
@@ -784,7 +832,7 @@ function HoldersTab() {
                   <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Address</th>
                   <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Balance</th>
                   <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">% of Supply</th>
-                  <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain</th>
+                  <th className="px-4 py-3 text-left text-muted-foreground font-semibold text-xs uppercase">Chain(s)</th>
                 </tr>
               </thead>
               <tbody>
@@ -793,7 +841,7 @@ function HoldersTab() {
                     <td className="px-4 py-3 font-bold text-[#9DD7E6]">{holder.rank}</td>
                     <td className="px-4 py-3">
                       <a
-                        href={`${holder.explorerUrl}/address/${holder.address}`}
+                        href={`https://etherscan.io/address/${holder.address}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[#9DD7E6] font-mono text-xs hover:underline"
@@ -801,14 +849,12 @@ function HoldersTab() {
                         {holder.shortAddress}
                       </a>
                     </td>
-                    <td className="px-4 py-3 font-semibold">{holder.balanceFormatted}</td>
+                    <td className="px-4 py-3">
+                      <BalanceDisplay wallet={holder} />
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">{holder.percentage}%</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
-                        holder.chain === 'ETH' ? 'bg-[#627EEA]' : 'bg-[#0052FF]'
-                      }`}>
-                        {holder.chain}
-                      </span>
+                      <ChainBadges wallet={holder} />
                     </td>
                   </tr>
                 ))}
