@@ -1,18 +1,11 @@
+
 import type { Metadata } from 'next'
-import { Space_Grotesk, Inter } from 'next/font/google'
+import { Montserrat } from 'next/font/google'
 import './globals.css'
-import { Sidebar } from '@/components/sidebar'
 
-const spaceGrotesk = Space_Grotesk({
+const montserrat = Montserrat({
   subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
-})
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-body',
-  display: 'swap',
+  variable: '--font-montserrat'
 })
 
 export const dynamic = "force-dynamic";
@@ -45,12 +38,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${inter.variable} font-body antialiased`}>
-        <Sidebar />
-        <main className="ml-64 min-h-screen page-background">
-          {children}
-        </main>
+    <html lang="en" className="dark">
+      <body className={`${montserrat.variable} font-sans antialiased bg-black text-white`}>
+        {children}
       </body>
     </html>
   )

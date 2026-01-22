@@ -1,59 +1,30 @@
+
 'use client';
 
-import { Newspaper, ExternalLink } from 'lucide-react';
-import { PageHeader } from '@/components/ui/page-header';
-import { GlassCard } from '@/components/ui/glass-card';
+import DashboardHeader from '@/components/dashboard-header';
+import { motion } from 'framer-motion';
 
 export default function SalibaSignalPage() {
   return (
-    <div className="min-h-screen page-background flex flex-col">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 flex flex-col">
+    <div className="min-h-screen bg-black flex flex-col">
+      <DashboardHeader />
 
-        {/* Hero Header */}
-        <PageHeader
-          title="The Saliba Signal"
-          subtitle="Newsletter metrics and subscriber analytics"
-          actions={
-            <a
-              href="https://thesalibasignal.beehiiv.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-mercury-aqua hover:bg-mercury-aqua-dark text-mercury-dark-grey font-semibold shadow-glow hover:shadow-glow transition-all duration-200 px-4 py-2.5 rounded-xl text-sm"
-            >
-              <span>Visit Newsletter</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          }
-        />
-
-        {/* Dashboard Embed */}
-        <GlassCard hover={false} className="flex-1 overflow-hidden">
+      <main className="flex-1 flex flex-col bg-black overflow-hidden p-4 md:p-8">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="flex-1 w-full glass-dark rounded-3xl overflow-hidden border border-white/10 shadow-2xl relative"
+        >
           <iframe
             src="https://beehiiv-dashboard.vercel.app/"
             className="w-full h-full border-0"
             title="The Saliba Signal Metrics"
-            style={{ minHeight: 'calc(100vh - 280px)' }}
+            style={{ minHeight: 'calc(100vh - 160px)' }}
           />
-        </GlassCard>
-
-        {/* Footer */}
-        <footer className="mt-8 pt-8 border-t border-mercury-light-grey/50">
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center gap-3">
-              <svg className="w-8 h-8" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="125" cy="125" r="115" fill="#B8BABC"/>
-                <circle cx="375" cy="125" r="115" fill="#B8BABC"/>
-                <circle cx="125" cy="375" r="115" fill="#B8BABC"/>
-                <circle cx="375" cy="375" r="115" fill="#9DD7E6"/>
-              </svg>
-              <span className="text-lg font-display font-bold text-mercury-dark-grey tracking-tight">LIQUID MERCURY</span>
-            </div>
-            <p className="text-sm text-muted-foreground text-center">
-              Powered by Liquid Mercury
-            </p>
-          </div>
-        </footer>
-      </div>
+          <div className="absolute inset-0 pointer-events-none ring-1 ring-white/10 rounded-3xl" />
+        </motion.div>
+      </main>
     </div>
   );
 }

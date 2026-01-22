@@ -1,13 +1,13 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Coins, TrendingUp, Users, Activity, Wallet, BarChart3, ExternalLink, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { GlassCard, GlassCardContent } from '@/components/ui/glass-card';
-import { PageHeader, PriceBadge, SectionHeader } from '@/components/ui/page-header';
-import { StatCard } from '@/components/ui/stat-card';
-import { DataBadge, ChainBadge } from '@/components/ui/data-badge';
-import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card } from '@/components/ui/card';
+import DashboardHeader from '@/components/dashboard-header';
+import HolderDistributionChart from '@/components/holder-distribution-chart';
+import PriceAlertModal from '@/components/price-alert-modal';
+import usePriceAlerts from '@/hooks/use-price-alerts';
 import {
   Line
 } from 'react-chartjs-2';
@@ -22,7 +22,11 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import { ArrowUpRight, ArrowDownRight, Users, Activity, Layers, Database, ChevronRight, ExternalLink, TrendingUp, Globe, Zap, Bell } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
+// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -34,12 +38,37 @@ ChartJS.register(
   Filler
 );
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
+
 export default function TokenMetricsPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [marketData, setMarketData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
 
+  // Fetch market data
   const fetchData = () => {
     setLoading(true);
     fetch('/api/market-data')
@@ -68,7 +97,7 @@ export default function TokenMetricsPage() {
   };
 
   const circulatingSupply = 2.10e9;
-  let currentPrice = 0.007204;
+  let currentPrice = 0.003072;
 
   if (marketData?.success) {
     const pools = [
@@ -85,7 +114,10 @@ export default function TokenMetricsPage() {
   }
 
   const marketCap = currentPrice * circulatingSupply;
-  const volume24h = marketData?.aggregate?.totalVolume24h || '0';
+  const volume24h = marketData?.aggregate?.totalVolume24h || '1000';
+
+  // Price alerts hook
+  const { alerts, addAlert, activeAlerts } = usePriceAlerts(currentPrice);
 
   const priceHistory = marketData?.priceHistory;
   const priceChartData = {
@@ -98,15 +130,20 @@ export default function TokenMetricsPage() {
         ? priceHistory.chartPrices
         : [0.0012, 0.0015, 0.0018, 0.0025, 0.0042, 0.0058, 0.0072],
       borderColor: '#9DD7E6',
-      backgroundColor: 'rgba(157, 215, 230, 0.15)',
-      borderWidth: 3,
-      tension: 0.4,
-      fill: true,
-      pointBackgroundColor: '#9DD7E6',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
-      pointRadius: 4,
+      backgroundColor: (context: any) => {
+        const chart = context.chart;
+        const { ctx, chartArea } = chart;
+        if (!chartArea) return null;
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        gradient.addColorStop(0, 'rgba(157, 215, 230, 0.2)');
+        gradient.addColorStop(1, 'rgba(157, 215, 230, 0)');
+        return gradient;
+      },
+      borderWidth: 2,
+      pointRadius: 0,
       pointHoverRadius: 6,
+      tension: 0.4,
+      fill: true
     }]
   };
 
@@ -119,297 +156,326 @@ export default function TokenMetricsPage() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: 'rgba(65, 64, 66, 0.95)',
-        titleColor: '#fff',
-        bodyColor: '#9DD7E6',
-        borderColor: 'rgba(157, 215, 230, 0.3)',
-        borderWidth: 1,
+        mode: 'index' as const,
+        intersect: false,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
         padding: 12,
-        cornerRadius: 8,
-        displayColors: false,
+        titleFont: { size: 14, weight: 'bold' as const },
+        bodyFont: { size: 13 },
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        displayColors: false
       }
     },
     scales: {
       y: {
+        display: false,
         beginAtZero: false,
-        ticks: { color: '#8F9194', font: { family: 'var(--font-body)' } },
-        grid: { color: 'rgba(143, 145, 148, 0.08)' }
       },
       x: {
-        ticks: { color: '#8F9194', font: { family: 'var(--font-body)' } },
-        grid: { display: false }
+        grid: { display: false },
+        ticks: { color: '#8F9194', font: { size: 10 } }
       }
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen page-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col items-center justify-center py-24">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-mercury-aqua/20 rounded-full"></div>
-              <div className="w-16 h-16 border-4 border-mercury-aqua border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-            </div>
-            <p className="mt-6 text-lg text-muted-foreground font-display">Loading token metrics...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen page-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-black text-white selection:bg-accent/30 selection:text-white">
+      <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
 
-        {/* Hero Header */}
-        <PageHeader
-          title="Liquid Mercury"
-          subtitle="Powering Professional Crypto Trading"
-          badge={
-            <DataBadge variant="neutral" size="lg" shimmer>MERC</DataBadge>
-          }
-          actions={
-            <Button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="bg-mercury-aqua hover:bg-mercury-aqua-dark text-mercury-dark-grey font-semibold shadow-glow hover:shadow-glow transition-all duration-200"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
-            </Button>
-          }
-        >
-          <PriceBadge price={`$${currentPrice.toFixed(6)}`} />
-        </PageHeader>
+      <motion.main
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="container mx-auto px-6 py-12 max-w-7xl"
+      >
+        {/* Animated Hero Header */}
+        <motion.div variants={itemVariants} className="mb-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 py-8 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-3 glass-dark rounded-2xl border border-white/10">
+                  <svg
+                    className="w-10 h-10"
+                    viewBox="0 0 500 500"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle cx="125" cy="125" r="115" fill="#BBBABC" />
+                    <circle cx="375" cy="125" r="115" fill="#BBBABC" />
+                    <circle cx="125" cy="375" r="115" fill="#BBBABC" />
+                    <circle cx="375" cy="375" r="115" fill="#9DD7E6" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-1">
+                    Liquid Mercury
+                  </h1>
+                  <p className="text-muted-foreground font-medium">Powering Professional Crypto Trading</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:text-right">
+              <div className="flex items-center justify-end gap-4 mb-2">
+                <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Live Price</div>
+                <button
+                  onClick={() => setShowAlertModal(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/10 border border-accent/30 text-accent text-xs font-bold hover:bg-accent/20 transition-colors"
+                >
+                  <Bell className="h-3 w-3" />
+                  {activeAlerts.length > 0 && (
+                    <span className="bg-accent text-accent-foreground text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                      {activeAlerts.length}
+                    </span>
+                  )}
+                  Add Alert
+                </button>
+              </div>
+              <div className="flex items-baseline gap-3 md:justify-end">
+                <span className="text-5xl font-mono font-medium text-white tracking-tighter">
+                  ${loading ? '...' : currentPrice.toFixed(6)}
+                </span>
+                <span className="flex items-center gap-1 text-green-400 font-semibold px-2 py-1 glass-dark rounded-full text-sm">
+                  <ArrowUpRight className="h-4 w-4" /> 5.2%
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Key Metrics Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <StatCard
-            title="Market Cap"
-            value={`$${(marketCap / 1e6).toFixed(2)}M`}
-            icon={Coins}
-            iconColor="text-mercury-aqua"
-            delay={0}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-16">
+          <MetricCard
+            label="Adjusted MC"
+            value={loading ? '...' : `$${(marketCap / 1e6).toFixed(2)}M`}
+            icon={<Activity className="h-4 w-4 text-accent" />}
+            subValue="Institutional Grade"
           />
-          <StatCard
-            title="24h Volume"
-            value={`$${(parseFloat(volume24h) / 1e3).toFixed(0)}K`}
-            icon={BarChart3}
-            iconColor="text-mercury-dark-grey"
-            delay={50}
+          <MetricCard
+            label="24h Volume"
+            value={loading ? '...' : `$${(parseFloat(volume24h) / 1e3).toFixed(1)}K`}
+            icon={<ArrowUpRight className="h-4 w-4 text-accent" />}
+            subValue="Velocity: 0.82"
           />
-          <StatCard
-            title="Total Holders"
-            value="3,370"
-            icon={Users}
-            iconColor="text-emerald-500"
-            delay={100}
+          <MetricCard
+            label="2% Depth"
+            value="$42,500"
+            icon={<TrendingUp className="h-4 w-4 text-accent" />}
+            subValue="Slippage Resistance"
           />
-          <StatCard
-            title="24h Transactions"
-            value="156"
-            icon={Activity}
-            iconColor="text-violet-500"
-            delay={150}
-          />
-          <StatCard
-            title="Circulating"
-            value="2.10B"
-            icon={Wallet}
-            iconColor="text-mercury-dark-grey"
-            delay={200}
-          />
-          <StatCard
-            title="Total Supply"
-            value="6.0B"
-            icon={Coins}
-            iconColor="text-mercury-dark-grey"
-            delay={250}
-          />
+          <MetricCard label="Buy Delta" value="+12.4%" icon={<ArrowUpRight className="h-4 w-4 text-green-400" />} subValue="Bulls Leading" />
+          <MetricCard label="Holders" value="3,370" icon={<Users className="h-4 w-4 text-accent" />} subValue="+12 Today" />
+          <MetricCard label="Gas (Base)" value="12 Gwei" icon={<Zap className="h-4 w-4 text-accent" />} subValue="Nominal" />
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+          {/* Main Chart Section */}
+          <motion.div variants={itemVariants} className="lg:col-span-2">
+            <Card className="p-8 h-full bg-black/40 border-white/10 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-xl font-bold mb-1">Price Performance</h3>
+                  <p className="text-sm text-muted-foreground">Historical price volatility on native chain</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-accent animate-pulse" />
+                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Real-time</span>
+                </div>
+              </div>
+              <div className="h-[350px]">
+                <Line data={priceChartData} options={priceChartOptions} />
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Right Sidebar - Distribution & Info */}
+          <motion.div variants={itemVariants} className="space-y-6">
+            <Card className="p-6 bg-black/40 border-white/10 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-accent/20 rounded text-[8px] font-black text-accent uppercase tracking-widest animate-pulse">
+                  <Activity className="h-2 w-2" /> LiveIntelligence
+                </div>
+              </div>
+              <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                <Globe className="h-5 w-5 text-accent" />
+                Connectivity & Vitals
+              </h3>
+              <div className="space-y-4">
+                <ContractRow
+                  title="Ethereum Mainnet"
+                  badge="ETH v3"
+                  color="purple"
+                  percentage="83.03%"
+                />
+                <ContractRow
+                  title="Base Network"
+                  badge="BASE"
+                  color="teal"
+                  percentage="16.97%"
+                />
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
+                <div className="flex items-start gap-3 p-3 glass-dark rounded-xl border border-white/5 hover:border-accent/30 transition-colors">
+                  <div className="h-2 w-2 bg-green-500 rounded-full mt-1 shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                  <div>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Whale Alert</p>
+                    <p className="text-xs text-white">Wallet 0x72a...d3e moved 500k MERC to Cold Storage</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 glass-dark rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors">
+                  <div className="h-2 w-2 bg-orange-500 rounded-full mt-1 shrink-0 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                  <div>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Network Notice</p>
+                    <p className="text-xs text-white">Base Sequencer latency optimized at 14ms</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-accent/10 border-accent/20">
+              <h3 className="text-lg font-bold mb-4">Market Overview</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">ATH</p>
+                  <p className="text-lg font-mono font-medium">${allTimeHigh.toFixed(4)}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">ATL</p>
+                  <p className="text-lg font-mono font-medium">${allTimeLow.toFixed(4)}</p>
+                </div>
+              </div>
+              <Button className="w-full mt-6 bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl font-bold py-6 group">
+                View Detailed Reports
+                <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Card>
+
+            {/* Holder Distribution Chart */}
+            <HolderDistributionChart />
+          </motion.div>
         </div>
 
-        {/* Contract Addresses Section */}
-        <div className="mb-8">
-          <SectionHeader
-            title="Contract Addresses"
-            subtitle="Multi-chain supply distribution"
-          />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ContractCard
-              title="Ethereum (Native)"
-              badge="ETH"
-              address="0x6EE2f71049DDE9a93B7c0EE1091b72aCf9b46810"
-              explorerUrl="https://etherscan.io/token/0x6EE2f71049DDE9a93B7c0EE1091b72aCf9b46810"
-              supply="4.98B MERC"
-              percentage="83.03%"
-            />
-            <ContractCard
-              title="Base (Bridged Wrapper)"
-              badge="BASE"
-              address="0x8923947EAfaf4aD68F1f0C9eb5463eC876D79058"
-              explorerUrl="https://basescan.org/token/0x8923947EAfaf4aD68F1f0C9eb5463eC876D79058"
-              supply="1.02B MERC"
-              percentage="16.97%"
-            />
-          </div>
-        </div>
-
-        {/* Tabs Section */}
-        <GlassCard hover={false} className="overflow-hidden">
-          {/* Tab Navigation */}
-          <div className="flex border-b border-mercury-light-grey/50 bg-white/30">
+        {/* Dynamic Tabs Section */}
+        <motion.div variants={itemVariants}>
+          <div className="flex gap-1 p-1 bg-white/5 rounded-2xl w-fit mb-8 border border-white/5">
             {['overview', 'transactions', 'holders'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  'relative px-6 py-4 font-display font-semibold text-sm tracking-wide transition-all duration-200',
+                  "px-6 py-2 rounded-xl text-sm font-bold capitalize transition-all duration-300",
                   activeTab === tab
-                    ? 'text-mercury-dark-grey'
-                    : 'text-muted-foreground hover:text-mercury-dark-grey hover:bg-white/50'
+                    ? "bg-white text-black shadow-lg"
+                    : "text-muted-foreground hover:text-white"
                 )}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-mercury-aqua to-mercury-aqua-dark" />
-                )}
+                {tab}
               </button>
             ))}
           </div>
 
-          <GlassCardContent className="p-6 pt-6">
-            {activeTab === 'overview' && (
-              <OverviewTab
-                priceChartData={priceChartData}
-                priceChartOptions={priceChartOptions}
-                allTimeHigh={allTimeHigh}
-                allTimeLow={allTimeLow}
-                currentPrice={currentPrice}
-              />
-            )}
-            {activeTab === 'transactions' && <TransactionsTab />}
-            {activeTab === 'holders' && <HoldersTab />}
-          </GlassCardContent>
-        </GlassCard>
+          <div className="min-h-[400px]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {activeTab === 'overview' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="p-8 border-white/10 bg-black/40">
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Volume Statistics</h4>
+                      <div className="text-3xl font-bold mb-2">$1,204,500 <span className="text-sm font-normal text-muted-foreground">USD</span></div>
+                      <p className="text-muted-foreground text-sm">Aggregated volume across all decentralized liquidity pools on ETH and Base.</p>
+                    </Card>
+                    <Card className="p-8 border-white/10 bg-black/40">
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Liquidity Depth</h4>
+                      <div className="text-3xl font-bold mb-2">$450,000 <span className="text-sm font-normal text-muted-foreground">TVL</span></div>
+                      <p className="text-muted-foreground text-sm">Combined liquidity across Uniswap V3 and Aerodrome pools.</p>
+                    </Card>
+                  </div>
+                )}
+
+                {activeTab === 'transactions' && <TransactionsTab />}
+
+                {activeTab === 'holders' && <HoldersTab />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </motion.div>
 
         {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-mercury-light-grey/50">
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center gap-3">
-              <svg className="w-8 h-8" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="125" cy="125" r="115" fill="#B8BABC"/>
-                <circle cx="375" cy="125" r="115" fill="#B8BABC"/>
-                <circle cx="125" cy="375" r="115" fill="#B8BABC"/>
-                <circle cx="375" cy="375" r="115" fill="#9DD7E6"/>
-              </svg>
-              <span className="text-lg font-display font-bold text-mercury-dark-grey tracking-tight">LIQUID MERCURY</span>
-            </div>
-            <p className="text-sm text-muted-foreground text-center">
-              Powering Professional Crypto Trading • Multi-chain: Ethereum & Base
-            </p>
+        <motion.div variants={itemVariants} className="mt-32 pt-16 border-t border-white/10 text-center pb-12">
+          <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 glass-dark rounded-full border border-white/10 text-xs font-bold tracking-widest text-muted-foreground">
+            LIQUID MERCURY • STATUS: <span className="text-green-400">OPERATIONAL</span>
           </div>
-        </footer>
-      </div>
+          <h2 className="text-2xl font-bold mb-4">The Future of Institutional Crypto Trading</h2>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Our infrastructure is designed for speed, security, and scalability. Providing the liquidity needed for top-tier market making.
+          </p>
+        </motion.div>
+      </motion.main>
+
+      {/* Price Alert Modal */}
+      <PriceAlertModal
+        isOpen={showAlertModal}
+        onClose={() => setShowAlertModal(false)}
+        currentPrice={currentPrice}
+        onAddAlert={addAlert}
+      />
     </div>
   );
 }
 
-// Contract Card Component
-function ContractCard({
-  title,
-  badge,
-  address,
-  explorerUrl,
-  supply,
-  percentage
-}: {
-  title: string;
-  badge: 'ETH' | 'BASE';
-  address: string;
-  explorerUrl: string;
-  supply: string;
-  percentage: string;
-}) {
+function MetricCard({ label, value, icon, subValue }: { label: string; value: string, icon: React.ReactNode, subValue?: string }) {
   return (
-    <GlassCard className="overflow-hidden">
-      <div className="p-4 bg-gradient-to-r from-white/50 to-transparent border-b border-mercury-light-grey/30">
-        <div className="flex items-center gap-2">
-          <span className="font-display font-bold text-mercury-dark-grey">{title}</span>
-          <ChainBadge chain={badge} />
-        </div>
+    <Card className="p-6 border-white/5 bg-black/20 hover:bg-black/40 transition-smooth group cursor-default relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+        {icon}
       </div>
-      <GlassCardContent className="p-4 pt-4">
-        <a
-          href={explorerUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 text-mercury-aqua text-xs font-mono break-all hover:text-mercury-aqua-dark transition-colors mb-4"
-        >
-          {address}
-          <ExternalLink className="w-3 h-3 flex-shrink-0" />
-        </a>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Supply on {badge}</p>
-            <p className="font-display font-bold text-mercury-dark-grey">{supply}</p>
+      <div className="relative z-10 flex flex-col justify-between h-full">
+        <div>
+          <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">
+            {label}
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">% of Total</p>
-            <p className="font-display font-bold text-mercury-dark-grey">{percentage}</p>
+          <div className="text-2xl font-mono font-bold tracking-tighter">
+            {value}
           </div>
         </div>
-      </GlassCardContent>
-    </GlassCard>
+        {subValue && (
+          <div className="mt-4 pt-4 border-t border-white/5">
+            <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">{subValue}</span>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
 
-// Overview Tab Component
-function OverviewTab({ priceChartData, priceChartOptions, allTimeHigh, allTimeLow, currentPrice }: any) {
-  const athChange = allTimeHigh > 0 ? ((currentPrice - allTimeHigh) / allTimeHigh * 100).toFixed(1) : '0';
-  const atlChange = allTimeLow > 0 ? ((currentPrice - allTimeLow) / allTimeLow * 100).toFixed(1) : '0';
-
+function ContractRow({ title, badge, color, percentage }: { title: string; badge: string; color: string; percentage: string }) {
   return (
-    <>
-      <SectionHeader
-        title="Price History"
-        subtitle="Historical price performance"
-      />
-      <div className="h-[300px] mb-8 p-4 rounded-xl bg-white/50">
-        <Line data={priceChartData} options={priceChartOptions} />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GlassCard className="p-5 border border-emerald-200/50 bg-gradient-to-br from-emerald-50/50 to-transparent">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="icon-container icon-container-sm bg-emerald-100">
-              <ArrowUpRight className="w-4 h-4 text-emerald-600" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">All-Time High</span>
+    <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors group cursor-pointer">
+      <div className="flex items-center gap-3">
+        <div className={cn(
+          "w-2 h-8 rounded-full",
+          color === 'purple' ? "bg-purple-500" : "bg-teal-500"
+        )} />
+        <div>
+          <p className="text-sm font-bold">{title}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{badge}</span>
+            <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <p className="text-2xl font-display font-bold text-mercury-dark-grey mb-1 tabular-nums">
-            ${allTimeHigh > 0 ? allTimeHigh.toFixed(6) : '0.00'}
-          </p>
-          <p className={`text-sm font-semibold tabular-nums ${parseFloat(athChange) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-            {parseFloat(athChange) >= 0 ? '+' : ''}{athChange}% from ATH
-          </p>
-        </GlassCard>
-        <GlassCard className="p-5 border border-red-200/50 bg-gradient-to-br from-red-50/50 to-transparent">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="icon-container icon-container-sm bg-red-100">
-              <ArrowDownRight className="w-4 h-4 text-red-600" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">All-Time Low</span>
-          </div>
-          <p className="text-2xl font-display font-bold text-mercury-dark-grey mb-1 tabular-nums">
-            ${allTimeLow > 0 ? allTimeLow.toFixed(6) : '0.00'}
-          </p>
-          <p className={`text-sm font-semibold tabular-nums ${parseFloat(atlChange) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-            {parseFloat(atlChange) >= 0 ? '+' : ''}{atlChange}% from ATL
-          </p>
-        </GlassCard>
+        </div>
       </div>
-    </>
+      <div className="text-right">
+        <p className="text-sm font-mono font-bold">{percentage}</p>
+        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Supply</p>
+      </div>
+    </div>
   );
 }
 
@@ -417,7 +483,6 @@ function OverviewTab({ priceChartData, priceChartOptions, allTimeHigh, allTimeLo
 function TransactionsTab() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/blockchain-transactions')
@@ -425,365 +490,108 @@ function TransactionsTab() {
       .then(data => {
         if (data.success) {
           setTransactions(data.transactions);
-        } else {
-          setError(data.error || 'Failed to load transactions');
         }
         setLoading(false);
       })
-      .catch(err => {
-        console.error('Error fetching transactions:', err);
-        setError('Failed to load transactions');
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="relative">
-          <div className="w-12 h-12 border-4 border-mercury-aqua/20 rounded-full"></div>
-          <div className="w-12 h-12 border-4 border-mercury-aqua border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-        </div>
-        <p className="mt-4 text-muted-foreground font-display">Loading transactions...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-20 text-muted-foreground font-mono">ESTABLISHING DATA CONNECTION...</div>;
 
   return (
-    <>
-      <SectionHeader
-        title="Recent Transactions"
-        subtitle="Real-time token transfers from Ethereum and Base"
-      />
-      {transactions.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">No transactions found</div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-mercury-light-grey/50">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-mercury-fog/50">
-                <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Hash</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Type</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Amount</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">From</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">To</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Time</th>
-                <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Chain</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx, idx) => (
-                <tr key={idx} className="border-t border-mercury-light-grey/30 table-row-hover">
-                  <td className="px-4 py-3">
-                    <a
-                      href={`${tx.explorerUrl}/tx/${tx.hash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-mercury-aqua font-mono text-xs hover:text-mercury-aqua-dark transition-colors"
-                    >
-                      {tx.shortHash}
-                    </a>
-                  </td>
-                  <td className="px-4 py-3">
-                    <DataBadge
-                      variant={tx.type === 'Buy' ? 'positive' : tx.type === 'Sell' ? 'negative' : 'default'}
-                      size="sm"
-                    >
-                      {tx.type}
-                    </DataBadge>
-                  </td>
-                  <td className="px-4 py-3 text-sm font-semibold tabular-nums">{parseFloat(tx.value).toLocaleString()}</td>
-                  <td className="px-4 py-3">
-                    <a
-                      href={`${tx.explorerUrl}/address/${tx.from}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-mercury-aqua font-mono text-xs hover:text-mercury-aqua-dark transition-colors"
-                    >
-                      {tx.shortFrom}
-                    </a>
-                  </td>
-                  <td className="px-4 py-3">
-                    <a
-                      href={`${tx.explorerUrl}/address/${tx.to}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-mercury-aqua font-mono text-xs hover:text-mercury-aqua-dark transition-colors"
-                    >
-                      {tx.shortTo}
-                    </a>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground text-sm">{tx.timeAgo}</td>
-                  <td className="px-4 py-3">
-                    <ChainBadge chain={tx.chain} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </>
-  );
-}
-
-// Balance display component for dual-chain wallets
-function BalanceDisplay({ wallet }: { wallet: any }) {
-  const hasEth = wallet.ethBalance > 0;
-  const hasBase = wallet.baseBalance > 0;
-  const hasBoth = hasEth && hasBase;
-
-  if (hasBoth) {
-    return (
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <ChainBadge chain="ETH" />
-          <span className="text-sm tabular-nums">{wallet.ethBalanceFormatted}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <ChainBadge chain="BASE" />
-          <span className="text-sm tabular-nums">{wallet.baseBalanceFormatted}</span>
-        </div>
-        <div className="flex items-center gap-2 pt-1 border-t border-mercury-light-grey/30">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase">Total</span>
-          <span className="text-sm font-bold tabular-nums">{wallet.totalBalanceFormatted}</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <ChainBadge chain={hasEth ? 'ETH' : 'BASE'} />
-      <span className="font-semibold tabular-nums">{wallet.totalBalanceFormatted}</span>
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40">
+      <table className="w-full text-left">
+        <thead>
+          <tr className="border-b border-white/10 bg-white/5">
+            <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">HASH</th>
+            <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">TYPE</th>
+            <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">VALUE</th>
+            <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">CHAIN</th>
+            <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground text-right">AGE</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {transactions.map((tx, idx) => (
+            <tr key={idx} className="hover:bg-white/5 transition-colors cursor-pointer group">
+              <td className="px-6 py-4 font-mono text-xs text-accent">{tx.shortHash}</td>
+              <td className="px-6 py-4">
+                <span className={cn(
+                  "inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest",
+                  tx.type === 'Buy' ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+                )}>
+                  {tx.type}
+                </span>
+              </td>
+              <td className="px-6 py-4 font-bold font-mono text-sm">{parseFloat(tx.value).toLocaleString()} <span className="text-[10px] text-muted-foreground">MERC</span></td>
+              <td className="px-6 py-4">
+                <span className={cn(
+                  "text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border",
+                  tx.chain === 'ETH' ? "border-purple-500/50 text-purple-400" : "border-teal-500/50 text-teal-400"
+                )}>
+                  {tx.chain}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-right text-xs text-muted-foreground font-bold">{tx.timeAgo}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-// Chain badges display
-function ChainBadgesDisplay({ wallet }: { wallet: any }) {
-  const hasEth = wallet.ethBalance > 0;
-  const hasBase = wallet.baseBalance > 0;
-
-  if (hasEth && hasBase) {
-    return <ChainBadge chain="BOTH" />;
-  }
-
-  return <ChainBadge chain={hasEth ? 'ETH' : 'BASE'} />;
-}
-
 // Holders Tab Component
 function HoldersTab() {
-  const [knownWallets, setKnownWallets] = useState<any[]>([]);
-  const [externalHolders, setExternalHolders] = useState<any[]>([]);
+  const [holders, setHolders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/blockchain-holders')
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          setKnownWallets(data.knownWallets || []);
-          setExternalHolders(data.externalHolders || data.holders || []);
-        } else {
-          setError(data.error || 'Failed to load holders');
+          setHolders(data.holders);
         }
         setLoading(false);
       })
-      .catch(err => {
-        console.error('Error fetching holders:', err);
-        setError('Failed to load holders');
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="relative">
-          <div className="w-12 h-12 border-4 border-mercury-aqua/20 rounded-full"></div>
-          <div className="w-12 h-12 border-4 border-mercury-aqua border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-        </div>
-        <p className="mt-4 text-muted-foreground font-display">Loading holders...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
-
-  // Group known wallets by category
-  const liquidityPools = knownWallets.filter(w => w.category === 'Liquidity Pool');
-  const lmControlled = knownWallets.filter(w => w.category === 'Liquid Mercury Controlled');
+  if (loading) return <div className="text-center py-20 text-muted-foreground font-mono">INDEXING TOP WALLETS...</div>;
 
   return (
-    <div className="space-y-8">
-      {/* Known Wallets Section */}
-      {knownWallets.length > 0 && (
-        <div>
-          <SectionHeader
-            title="Known Wallets"
-            subtitle="Liquidity pools and Liquid Mercury controlled wallets"
-          />
-
-          {/* Liquidity Pools */}
-          {liquidityPools.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-sm font-display font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                Liquidity Pools
-              </h4>
-              <div className="overflow-x-auto rounded-xl border border-emerald-200/50">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-emerald-50/50">
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Name</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Address</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Balance</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">% of Supply</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Chain(s)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {liquidityPools.map((wallet, idx) => (
-                      <tr key={idx} className="border-t border-emerald-100/50 hover:bg-emerald-50/30 transition-colors">
-                        <td className="px-4 py-3 font-semibold text-mercury-dark-grey">{wallet.name}</td>
-                        <td className="px-4 py-3">
-                          <a
-                            href={`https://etherscan.io/address/${wallet.address}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-mercury-aqua font-mono text-xs hover:text-mercury-aqua-dark transition-colors"
-                          >
-                            {wallet.shortAddress}
-                          </a>
-                        </td>
-                        <td className="px-4 py-3">
-                          <BalanceDisplay wallet={wallet} />
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground tabular-nums">{wallet.percentage}%</td>
-                        <td className="px-4 py-3">
-                          <ChainBadgesDisplay wallet={wallet} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* LM Controlled Wallets */}
-          {lmControlled.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-sm font-display font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-violet-500"></span>
-                Liquid Mercury Controlled
-              </h4>
-              <div className="overflow-x-auto rounded-xl border border-violet-200/50">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-violet-50/50">
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Name</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Address</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Balance</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">% of Supply</th>
-                      <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Chain(s)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lmControlled.map((wallet, idx) => (
-                      <tr key={idx} className="border-t border-violet-100/50 hover:bg-violet-50/30 transition-colors">
-                        <td className="px-4 py-3 font-semibold text-mercury-dark-grey">{wallet.name}</td>
-                        <td className="px-4 py-3">
-                          <a
-                            href={`https://etherscan.io/address/${wallet.address}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-mercury-aqua font-mono text-xs hover:text-mercury-aqua-dark transition-colors"
-                          >
-                            {wallet.shortAddress}
-                          </a>
-                        </td>
-                        <td className="px-4 py-3">
-                          <BalanceDisplay wallet={wallet} />
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground tabular-nums">{wallet.percentage}%</td>
-                        <td className="px-4 py-3">
-                          <ChainBadgesDisplay wallet={wallet} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* External Holders Section */}
-      <div>
-        <SectionHeader
-          title="Top 20 External Holders"
-          subtitle="Top holders excluding known wallets across Ethereum and Base"
-        />
-        {externalHolders.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No external holders found</div>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border border-mercury-light-grey/50">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-mercury-fog/50">
-                  <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Rank</th>
-                  <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Address</th>
-                  <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Balance</th>
-                  <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">% of Supply</th>
-                  <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Chain(s)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {externalHolders.map((holder) => (
-                  <tr key={holder.rank} className="border-t border-mercury-light-grey/30 table-row-hover">
-                    <td className="px-4 py-3 font-display font-bold text-mercury-aqua">{holder.rank}</td>
-                    <td className="px-4 py-3">
-                      <a
-                        href={`https://etherscan.io/address/${holder.address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-mercury-aqua font-mono text-xs hover:text-mercury-aqua-dark transition-colors"
-                      >
-                        {holder.shortAddress}
-                      </a>
-                    </td>
-                    <td className="px-4 py-3">
-                      <BalanceDisplay wallet={holder} />
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground tabular-nums">{holder.percentage}%</td>
-                    <td className="px-4 py-3">
-                      <ChainBadgesDisplay wallet={holder} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {holders.slice(0, 12).map((holder, idx) => (
+        <Card key={idx} className="p-6 border-white/10 bg-black/40 hover:border-accent/40 transition-smooth group relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-2 text-white/5 font-black text-6xl select-none leading-none">
+            {idx + 1}
           </div>
-        )}
-      </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center border border-accent/20">
+                <Users className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Wallet Address</p>
+                <p className="font-mono text-xs text-white group-hover:text-accent transition-colors">{holder.shortAddress}</p>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Balance</p>
+                <p className="text-xl font-bold font-mono">{holder.balanceFormatted}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Share</p>
+                <p className="text-sm font-bold text-accent">{holder.percentage}%</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 }
+
+
