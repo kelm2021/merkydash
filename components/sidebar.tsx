@@ -1,10 +1,10 @@
-
 'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BarChart3, TrendingUp, Mail, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const navItems = [
   {
@@ -33,31 +33,47 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border/40 bg-background">
-      <div className="flex h-full flex-col">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-mercury-dark-grey overflow-hidden">
+      {/* Noise texture overlay */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-noise" />
+
+      {/* Subtle gradient overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(157, 215, 230, 0.08) 0%, transparent 50%)',
+        }}
+      />
+
+      <div className="relative flex h-full flex-col">
         {/* Logo Section */}
-        <div className="flex items-center gap-3 border-b border-border/40 px-6 py-5">
-          <div className="relative w-10 h-10">
-            <Image
-              src="/LiquidMercury-Icon-500px.png"
-              alt="Liquid Mercury"
-              fill
-              className="object-contain"
-            />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">
-              MERC Dashboard
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Internal Monitoring
-            </p>
+        <div className="px-6 py-6">
+          <div className="flex items-center gap-3">
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-glow-sm">
+              <Image
+                src="/LiquidMercury-Icon-500px.png"
+                alt="Liquid Mercury"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="text-lg font-display font-semibold text-white">
+                MERC Dashboard
+              </h1>
+              <p className="text-xs text-mercury-silver/70 tracking-wide">
+                Internal Monitoring
+              </p>
+            </div>
           </div>
         </div>
 
+        {/* Chrome gradient separator */}
+        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-mercury-silver/30 to-transparent" />
+
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6">
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -66,14 +82,32 @@ export function Sidebar() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                    className={cn(
+                      'group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                       isActive
-                        ? 'bg-[#9DD7E6] text-black'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
+                        ? 'bg-mercury-aqua text-mercury-dark-grey shadow-glow'
+                        : 'text-mercury-silver hover:bg-white/5 hover:text-white'
+                    )}
                   >
-                    <Icon className="h-5 w-5" />
-                    {item.label}
+                    <span
+                      className={cn(
+                        'flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200',
+                        isActive
+                          ? 'bg-mercury-dark-grey/10'
+                          : 'bg-white/5 group-hover:bg-mercury-aqua/20 group-hover:scale-110'
+                      )}
+                    >
+                      <Icon className={cn(
+                        'h-4.5 w-4.5 transition-transform duration-200',
+                        !isActive && 'group-hover:scale-110'
+                      )} />
+                    </span>
+                    <span className="font-display">{item.label}</span>
+
+                    {/* Active indicator glow */}
+                    {isActive && (
+                      <div className="absolute left-0 w-1 h-8 rounded-r-full bg-mercury-aqua shadow-glow" />
+                    )}
                   </Link>
                 </li>
               );
@@ -81,22 +115,29 @@ export function Sidebar() {
           </ul>
         </nav>
 
+        {/* Chrome gradient separator */}
+        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-mercury-silver/30 to-transparent" />
+
         {/* Footer */}
-        <div className="border-t border-border/40 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <svg
-              className="w-6 h-6"
-              viewBox="0 0 500 500"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle cx="125" cy="125" r="115" fill="#BBBABC"/>
-              <circle cx="375" cy="125" r="115" fill="#BBBABC"/>
-              <circle cx="125" cy="375" r="115" fill="#BBBABC"/>
-              <circle cx="375" cy="375" r="115" fill="#9DD7E6"/>
-            </svg>
-            <span className="text-xs font-semibold text-muted-foreground">
-              LIQUID MERCURY
-            </span>
+        <div className="px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <svg
+                className="w-7 h-7"
+                viewBox="0 0 500 500"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="125" cy="125" r="115" fill="#BBBABC" opacity="0.8"/>
+                <circle cx="375" cy="125" r="115" fill="#BBBABC" opacity="0.8"/>
+                <circle cx="125" cy="375" r="115" fill="#BBBABC" opacity="0.8"/>
+                <circle cx="375" cy="375" r="115" fill="#9DD7E6"/>
+              </svg>
+            </div>
+            <div>
+              <span className="text-[10px] font-display font-semibold tracking-[0.2em] text-mercury-silver/60 uppercase">
+                Liquid Mercury
+              </span>
+            </div>
           </div>
         </div>
       </div>
