@@ -16,17 +16,17 @@ const DataBadge = React.forwardRef<HTMLSpanElement, DataBadgeProps>(
   ) => {
     const variantClasses = {
       default:
-        'bg-mercury-fog text-mercury-dark-grey border-mercury-light-grey/50',
+        'bg-white/10 text-white border-white/20',
       ethereum:
         'badge-chain-eth text-white border-transparent',
       base:
         'badge-chain-base text-white border-transparent',
       positive:
-        'bg-emerald-50 text-emerald-700 border-emerald-200',
+        'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
       negative:
-        'bg-red-50 text-red-700 border-red-200',
+        'bg-red-500/20 text-red-400 border-red-500/30',
       neutral:
-        'bg-mercury-aqua/10 text-mercury-dark-grey border-mercury-aqua/30',
+        'bg-mercury-aqua/10 text-mercury-aqua border-mercury-aqua/30',
     };
 
     const sizeClasses = {
@@ -103,28 +103,28 @@ const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
   ({ className, status, children, ...props }, ref) => {
     const statusConfig = {
       active: {
-        dotColor: 'bg-emerald-500',
-        bgColor: 'bg-emerald-50',
-        textColor: 'text-emerald-700',
-        borderColor: 'border-emerald-200',
+        dotColor: 'bg-emerald-400',
+        bgColor: 'bg-emerald-500/20',
+        textColor: 'text-emerald-400',
+        borderColor: 'border-emerald-500/30',
       },
       inactive: {
         dotColor: 'bg-gray-400',
-        bgColor: 'bg-gray-50',
-        textColor: 'text-gray-600',
-        borderColor: 'border-gray-200',
+        bgColor: 'bg-gray-500/20',
+        textColor: 'text-gray-400',
+        borderColor: 'border-gray-500/30',
       },
       pending: {
-        dotColor: 'bg-amber-500 animate-pulse',
-        bgColor: 'bg-amber-50',
-        textColor: 'text-amber-700',
-        borderColor: 'border-amber-200',
+        dotColor: 'bg-amber-400 animate-pulse',
+        bgColor: 'bg-amber-500/20',
+        textColor: 'text-amber-400',
+        borderColor: 'border-amber-500/30',
       },
       warning: {
-        dotColor: 'bg-red-500',
-        bgColor: 'bg-red-50',
-        textColor: 'text-red-700',
-        borderColor: 'border-red-200',
+        dotColor: 'bg-red-400',
+        bgColor: 'bg-red-500/20',
+        textColor: 'text-red-400',
+        borderColor: 'border-red-500/30',
       },
     };
 
@@ -166,7 +166,7 @@ const ChangeIndicator = React.forwardRef<HTMLSpanElement, ChangeIndicatorProps>(
         ref={ref}
         className={cn(
           'inline-flex items-center gap-0.5 text-sm font-medium tabular-nums',
-          isPositive ? 'text-emerald-600' : 'text-red-600',
+          isPositive ? 'text-emerald-400' : 'text-red-400',
           className
         )}
         {...props}

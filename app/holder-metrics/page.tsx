@@ -270,7 +270,7 @@ export default function HolderMetricsPage() {
             <Button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="bg-mercury-aqua hover:bg-mercury-aqua-dark text-mercury-dark-grey font-semibold shadow-glow hover:shadow-glow transition-all duration-200"
+              className="bg-mercury-aqua hover:bg-mercury-aqua-dark text-white font-semibold shadow-glow hover:shadow-glow transition-all duration-200"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
@@ -314,7 +314,7 @@ export default function HolderMetricsPage() {
               </GlassCard>
               <GlassCard className={cn(
                 'p-5 border',
-                metrics.holderSnapshot.growth.absolute >= 0 ? 'border-emerald-300/50' : 'border-red-300/50'
+                metrics.holderSnapshot.growth.absolute >= 0 ? 'border-emerald-500/30' : 'border-red-500/30'
               )}>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Growth</p>
                 <div className="flex items-center gap-2">
@@ -356,7 +356,7 @@ export default function HolderMetricsPage() {
             value={metrics.avgAcquisitionAmount.toLocaleString()}
             subtitle={`Median: ${metrics.medianAcquisitionAmount.toLocaleString()}`}
             icon={Wallet}
-            iconColor="text-mercury-dark-grey"
+            iconColor="text-white"
             delay={50}
           />
           <StatCard
@@ -381,11 +381,11 @@ export default function HolderMetricsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <GlassCard className="p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="icon-container icon-container-sm bg-emerald-100">
-                <Users className="w-4 h-4 text-emerald-600" />
+              <div className="icon-container icon-container-sm bg-emerald-500/20">
+                <Users className="w-4 h-4 text-emerald-400" />
               </div>
               <div>
-                <h3 className="font-display font-bold text-mercury-dark-grey">Wallet Status</h3>
+                <h3 className="font-display font-bold text-white">Wallet Status</h3>
                 <p className="text-xs text-muted-foreground">Current holding status</p>
               </div>
             </div>
@@ -400,7 +400,7 @@ export default function HolderMetricsPage() {
                 <Wallet className="w-4 h-4 text-mercury-aqua" />
               </div>
               <div>
-                <h3 className="font-display font-bold text-mercury-dark-grey">Acquisition Method</h3>
+                <h3 className="font-display font-bold text-white">Acquisition Method</h3>
                 <p className="text-xs text-muted-foreground">How wallets got MERC</p>
               </div>
             </div>
@@ -415,7 +415,7 @@ export default function HolderMetricsPage() {
                 <Calendar className="w-4 h-4 text-mercury-aqua" />
               </div>
               <div>
-                <h3 className="font-display font-bold text-mercury-dark-grey">20-Day Retention</h3>
+                <h3 className="font-display font-bold text-white">20-Day Retention</h3>
                 <p className="text-xs text-muted-foreground">Wallets holding 20+ days</p>
               </div>
             </div>
@@ -426,7 +426,7 @@ export default function HolderMetricsPage() {
               </div>
             </div>
             <div className="mt-4">
-              <div className="h-3 bg-mercury-light-grey/50 rounded-full overflow-hidden">
+              <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-mercury-aqua to-emerald-500 rounded-full transition-all duration-500"
                   style={{ width: `${metrics.walletsHeldOver20DaysPercent}%` }}
@@ -443,7 +443,7 @@ export default function HolderMetricsPage() {
               title="New Wallets by Week"
               subtitle="Weekly acquisition breakdown"
             />
-            <div className="h-[250px] p-2 bg-white/50 rounded-xl">
+            <div className="h-[250px] p-2 bg-white/5 rounded-xl">
               <Bar data={weeklyWalletsData} options={chartOptions} />
             </div>
           </GlassCard>
@@ -453,7 +453,7 @@ export default function HolderMetricsPage() {
               title="Tokens Acquired by Week"
               subtitle="Total MERC acquired each week"
             />
-            <div className="h-[250px] p-2 bg-white/50 rounded-xl">
+            <div className="h-[250px] p-2 bg-white/5 rounded-xl">
               <Line data={weeklyVolumeData} options={chartOptions} />
             </div>
           </GlassCard>
@@ -465,10 +465,10 @@ export default function HolderMetricsPage() {
             title="Weekly Performance Summary"
             subtitle="Detailed weekly breakdown"
           />
-          <div className="overflow-x-auto rounded-xl border border-mercury-light-grey/50">
+          <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="w-full">
               <thead>
-                <tr className="bg-mercury-fog/50">
+                <tr className="bg-white/5">
                   <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Week</th>
                   <th className="px-4 py-3 text-right text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">New Wallets</th>
                   <th className="px-4 py-3 text-right text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Total Acquired</th>
@@ -477,7 +477,7 @@ export default function HolderMetricsPage() {
               </thead>
               <tbody>
                 {metrics.weeklyBreakdown.map((week, idx) => (
-                  <tr key={idx} className="border-t border-mercury-light-grey/30 table-row-hover">
+                  <tr key={idx} className="border-t border-white/10 table-row-hover">
                     <td className="px-4 py-3 font-medium">{week.weekStart} - {week.weekEnd}</td>
                     <td className="px-4 py-3 text-right font-display font-bold text-mercury-aqua tabular-nums">{week.newWallets}</td>
                     <td className="px-4 py-3 text-right tabular-nums">{week.totalAcquired.toLocaleString()} MERC</td>
@@ -500,10 +500,10 @@ export default function HolderMetricsPage() {
               No holder data available. Alchemy API key may be required.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-mercury-light-grey/50">
+            <div className="overflow-x-auto rounded-xl border border-white/10">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-mercury-fog/50">
+                  <tr className="bg-white/5">
                     <th className="px-3 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Wallet</th>
                     <th className="px-3 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">First Acquired</th>
                     <th className="px-3 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Days Held</th>
@@ -516,7 +516,7 @@ export default function HolderMetricsPage() {
                 </thead>
                 <tbody>
                   {metrics.topNewHolders.map((holder, idx) => (
-                    <tr key={idx} className="border-t border-mercury-light-grey/30 table-row-hover">
+                    <tr key={idx} className="border-t border-white/10 table-row-hover">
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2">
                           <a
@@ -578,10 +578,10 @@ export default function HolderMetricsPage() {
             title="Recent New Wallets"
             subtitle="Most recent acquisitions since campaign start"
           />
-          <div className="overflow-x-auto rounded-xl border border-mercury-light-grey/50">
+          <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="w-full">
               <thead>
-                <tr className="bg-mercury-fog/50">
+                <tr className="bg-white/5">
                   <th className="px-3 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Wallet</th>
                   <th className="px-3 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Acquired On</th>
                   <th className="px-3 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Days Ago</th>
@@ -592,7 +592,7 @@ export default function HolderMetricsPage() {
               </thead>
               <tbody>
                 {metrics.recentNewWallets.map((wallet, idx) => (
-                  <tr key={idx} className="border-t border-mercury-light-grey/30 table-row-hover">
+                  <tr key={idx} className="border-t border-white/10 table-row-hover">
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
                         <a
@@ -634,7 +634,7 @@ export default function HolderMetricsPage() {
         </GlassCard>
 
         {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-mercury-light-grey/50">
+        <footer className="mt-12 pt-8 border-t border-white/10">
           <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-3">
               <svg className="w-8 h-8" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
@@ -643,7 +643,7 @@ export default function HolderMetricsPage() {
                 <circle cx="125" cy="375" r="115" fill="#B8BABC"/>
                 <circle cx="375" cy="375" r="115" fill="#9DD7E6"/>
               </svg>
-              <span className="text-lg font-display font-bold text-mercury-dark-grey tracking-tight">LIQUID MERCURY</span>
+              <span className="text-lg font-display font-bold text-white tracking-tight">LIQUID MERCURY</span>
             </div>
             <p className="text-sm text-muted-foreground text-center">
               Campaign data tracked via Alchemy and Ethplorer APIs

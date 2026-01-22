@@ -52,7 +52,7 @@ const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
 
             {/* Value */}
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl md:text-3xl font-display font-bold text-mercury-dark-grey tabular-nums">
+              <span className="text-2xl md:text-3xl font-display font-bold text-white tabular-nums">
                 {value}
               </span>
               {trend && (
@@ -101,7 +101,7 @@ const CompactStatCard = React.forwardRef<HTMLDivElement, CompactStatCardProps>(
       <div
         ref={ref}
         className={cn(
-          'flex items-center gap-3 rounded-xl bg-white/50 px-4 py-3 backdrop-blur-sm',
+          'flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3 backdrop-blur-sm border border-white/10',
           className
         )}
         {...props}
@@ -115,7 +115,7 @@ const CompactStatCard = React.forwardRef<HTMLDivElement, CompactStatCardProps>(
           <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
-          <p className="text-lg font-display font-semibold text-mercury-dark-grey tabular-nums">
+          <p className="text-lg font-display font-semibold text-white tabular-nums">
             {value}
           </p>
         </div>

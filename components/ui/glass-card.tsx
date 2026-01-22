@@ -58,7 +58,7 @@ const GlassCardTitle = React.forwardRef<HTMLHeadingElement, GlassCardTitleProps>
     <h3
       ref={ref}
       className={cn(
-        'text-xl font-display font-semibold leading-none tracking-tight text-mercury-dark-grey',
+        'text-xl font-display font-semibold leading-none tracking-tight text-white',
         className
       )}
       {...props}

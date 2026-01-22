@@ -111,7 +111,7 @@ const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps>(
         {...props}
       >
         <div>
-          <h2 className="text-xl font-display font-semibold text-mercury-dark-grey section-underline">
+          <h2 className="text-xl font-display font-semibold text-white section-underline">
             {title}
           </h2>
           {subtitle && (

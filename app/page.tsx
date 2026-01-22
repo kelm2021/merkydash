@@ -258,7 +258,7 @@ export default function TokenMetricsPage() {
         {/* Tabs Section */}
         <GlassCard hover={false} className="overflow-hidden">
           {/* Tab Navigation */}
-          <div className="flex border-b border-mercury-light-grey/50 bg-white/30">
+          <div className="flex border-b border-white/10 bg-white/5">
             {['overview', 'transactions', 'holders'].map((tab) => (
               <button
                 key={tab}
@@ -266,8 +266,8 @@ export default function TokenMetricsPage() {
                 className={cn(
                   'relative px-6 py-4 font-display font-semibold text-sm tracking-wide transition-all duration-200',
                   activeTab === tab
-                    ? 'text-mercury-dark-grey'
-                    : 'text-muted-foreground hover:text-mercury-dark-grey hover:bg-white/50'
+                    ? 'text-white'
+                    : 'text-muted-foreground hover:text-white hover:bg-white/10'
                 )}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -294,7 +294,7 @@ export default function TokenMetricsPage() {
         </GlassCard>
 
         {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-mercury-light-grey/50">
+        <footer className="mt-12 pt-8 border-t border-white/10">
           <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-3">
               <svg className="w-8 h-8" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
@@ -303,7 +303,7 @@ export default function TokenMetricsPage() {
                 <circle cx="125" cy="375" r="115" fill="#B8BABC"/>
                 <circle cx="375" cy="375" r="115" fill="#9DD7E6"/>
               </svg>
-              <span className="text-lg font-display font-bold text-mercury-dark-grey tracking-tight">LIQUID MERCURY</span>
+              <span className="text-lg font-display font-bold text-white tracking-tight">LIQUID MERCURY</span>
             </div>
             <p className="text-sm text-muted-foreground text-center">
               Powering Professional Crypto Trading • Multi-chain: Ethereum & Base
@@ -333,9 +333,9 @@ function ContractCard({
 }) {
   return (
     <GlassCard className="overflow-hidden">
-      <div className="p-4 bg-gradient-to-r from-white/50 to-transparent border-b border-mercury-light-grey/30">
+      <div className="p-4 bg-gradient-to-r from-white/5 to-transparent border-b border-white/10">
         <div className="flex items-center gap-2">
-          <span className="font-display font-bold text-mercury-dark-grey">{title}</span>
+          <span className="font-display font-bold text-white">{title}</span>
           <ChainBadge chain={badge} />
         </div>
       </div>
@@ -352,11 +352,11 @@ function ContractCard({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Supply on {badge}</p>
-            <p className="font-display font-bold text-mercury-dark-grey">{supply}</p>
+            <p className="font-display font-bold text-white">{supply}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">% of Total</p>
-            <p className="font-display font-bold text-mercury-dark-grey">{percentage}</p>
+            <p className="font-display font-bold text-white">{percentage}</p>
           </div>
         </div>
       </GlassCardContent>
@@ -375,33 +375,33 @@ function OverviewTab({ priceChartData, priceChartOptions, allTimeHigh, allTimeLo
         title="Price History"
         subtitle="Historical price performance"
       />
-      <div className="h-[300px] mb-8 p-4 rounded-xl bg-white/50">
+      <div className="h-[300px] mb-8 p-4 rounded-xl bg-white/5">
         <Line data={priceChartData} options={priceChartOptions} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GlassCard className="p-5 border border-emerald-200/50 bg-gradient-to-br from-emerald-50/50 to-transparent">
+        <GlassCard className="p-5 border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent">
           <div className="flex items-center gap-3 mb-3">
-            <div className="icon-container icon-container-sm bg-emerald-100">
-              <ArrowUpRight className="w-4 h-4 text-emerald-600" />
+            <div className="icon-container icon-container-sm bg-emerald-500/20">
+              <ArrowUpRight className="w-4 h-4 text-emerald-400" />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">All-Time High</span>
           </div>
-          <p className="text-2xl font-display font-bold text-mercury-dark-grey mb-1 tabular-nums">
+          <p className="text-2xl font-display font-bold text-white mb-1 tabular-nums">
             ${allTimeHigh > 0 ? allTimeHigh.toFixed(6) : '0.00'}
           </p>
-          <p className={`text-sm font-semibold tabular-nums ${parseFloat(athChange) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+          <p className={`text-sm font-semibold tabular-nums ${parseFloat(athChange) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
             {parseFloat(athChange) >= 0 ? '+' : ''}{athChange}% from ATH
           </p>
         </GlassCard>
-        <GlassCard className="p-5 border border-red-200/50 bg-gradient-to-br from-red-50/50 to-transparent">
+        <GlassCard className="p-5 border border-red-500/30 bg-gradient-to-br from-red-500/10 to-transparent">
           <div className="flex items-center gap-3 mb-3">
-            <div className="icon-container icon-container-sm bg-red-100">
-              <ArrowDownRight className="w-4 h-4 text-red-600" />
+            <div className="icon-container icon-container-sm bg-red-500/20">
+              <ArrowDownRight className="w-4 h-4 text-red-400" />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">All-Time Low</span>
           </div>
-          <p className="text-2xl font-display font-bold text-mercury-dark-grey mb-1 tabular-nums">
+          <p className="text-2xl font-display font-bold text-white mb-1 tabular-nums">
             ${allTimeLow > 0 ? allTimeLow.toFixed(6) : '0.00'}
           </p>
           <p className={`text-sm font-semibold tabular-nums ${parseFloat(atlChange) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
@@ -466,10 +466,10 @@ function TransactionsTab() {
       {transactions.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">No transactions found</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-mercury-light-grey/50">
+        <div className="overflow-x-auto rounded-xl border border-white/10">
           <table className="w-full">
             <thead>
-              <tr className="bg-mercury-fog/50">
+              <tr className="bg-white/5">
                 <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Hash</th>
                 <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Type</th>
                 <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Amount</th>
@@ -481,7 +481,7 @@ function TransactionsTab() {
             </thead>
             <tbody>
               {transactions.map((tx, idx) => (
-                <tr key={idx} className="border-t border-mercury-light-grey/30 table-row-hover">
+                <tr key={idx} className="border-t border-white/10 table-row-hover">
                   <td className="px-4 py-3">
                     <a
                       href={`${tx.explorerUrl}/tx/${tx.hash}`}
@@ -552,7 +552,7 @@ function BalanceDisplay({ wallet }: { wallet: any }) {
           <ChainBadge chain="BASE" />
           <span className="text-sm tabular-nums">{wallet.baseBalanceFormatted}</span>
         </div>
-        <div className="flex items-center gap-2 pt-1 border-t border-mercury-light-grey/30">
+        <div className="flex items-center gap-2 pt-1 border-t border-white/10">
           <span className="text-[10px] font-semibold text-muted-foreground uppercase">Total</span>
           <span className="text-sm font-bold tabular-nums">{wallet.totalBalanceFormatted}</span>
         </div>
@@ -647,10 +647,10 @@ function HoldersTab() {
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 Liquidity Pools
               </h4>
-              <div className="overflow-x-auto rounded-xl border border-emerald-200/50">
+              <div className="overflow-x-auto rounded-xl border border-emerald-500/30">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-emerald-50/50">
+                    <tr className="bg-emerald-500/10">
                       <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Name</th>
                       <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Address</th>
                       <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Balance</th>
@@ -660,8 +660,8 @@ function HoldersTab() {
                   </thead>
                   <tbody>
                     {liquidityPools.map((wallet, idx) => (
-                      <tr key={idx} className="border-t border-emerald-100/50 hover:bg-emerald-50/30 transition-colors">
-                        <td className="px-4 py-3 font-semibold text-mercury-dark-grey">{wallet.name}</td>
+                      <tr key={idx} className="border-t border-emerald-500/20 hover:bg-emerald-500/10 transition-colors">
+                        <td className="px-4 py-3 font-semibold text-white">{wallet.name}</td>
                         <td className="px-4 py-3">
                           <a
                             href={`https://etherscan.io/address/${wallet.address}`}
@@ -694,10 +694,10 @@ function HoldersTab() {
                 <span className="w-2 h-2 rounded-full bg-violet-500"></span>
                 Liquid Mercury Controlled
               </h4>
-              <div className="overflow-x-auto rounded-xl border border-violet-200/50">
+              <div className="overflow-x-auto rounded-xl border border-violet-500/30">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-violet-50/50">
+                    <tr className="bg-violet-500/10">
                       <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Name</th>
                       <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Address</th>
                       <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Balance</th>
@@ -707,8 +707,8 @@ function HoldersTab() {
                   </thead>
                   <tbody>
                     {lmControlled.map((wallet, idx) => (
-                      <tr key={idx} className="border-t border-violet-100/50 hover:bg-violet-50/30 transition-colors">
-                        <td className="px-4 py-3 font-semibold text-mercury-dark-grey">{wallet.name}</td>
+                      <tr key={idx} className="border-t border-violet-500/20 hover:bg-violet-500/10 transition-colors">
+                        <td className="px-4 py-3 font-semibold text-white">{wallet.name}</td>
                         <td className="px-4 py-3">
                           <a
                             href={`https://etherscan.io/address/${wallet.address}`}
@@ -745,10 +745,10 @@ function HoldersTab() {
         {externalHolders.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">No external holders found</div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-mercury-light-grey/50">
+          <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="w-full">
               <thead>
-                <tr className="bg-mercury-fog/50">
+                <tr className="bg-white/5">
                   <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Rank</th>
                   <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Address</th>
                   <th className="px-4 py-3 text-left text-muted-foreground font-display font-semibold text-xs uppercase tracking-wider">Balance</th>
@@ -758,7 +758,7 @@ function HoldersTab() {
               </thead>
               <tbody>
                 {externalHolders.map((holder) => (
-                  <tr key={holder.rank} className="border-t border-mercury-light-grey/30 table-row-hover">
+                  <tr key={holder.rank} className="border-t border-white/10 table-row-hover">
                     <td className="px-4 py-3 font-display font-bold text-mercury-aqua">{holder.rank}</td>
                     <td className="px-4 py-3">
                       <a
