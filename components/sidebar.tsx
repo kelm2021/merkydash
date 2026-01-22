@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, TrendingUp, Mail, Users } from 'lucide-react';
+import { BarChart3, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -16,16 +16,6 @@ const navItems = [
     href: '/markets',
     label: 'Markets',
     icon: TrendingUp,
-  },
-  {
-    href: '/holder-metrics',
-    label: 'Wallet Holders',
-    icon: Users,
-  },
-  {
-    href: '/saliba-signal',
-    label: 'The Saliba Signal',
-    icon: Mail,
   },
 ];
 
