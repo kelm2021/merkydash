@@ -24,12 +24,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'MERC Dashboard | Liquid Mercury',
     description: 'Professional internal monitoring dashboard for MERC token metrics, markets, and holder analytics',
+    url: 'https://merctokendashboard.vercel.app',
     images: [
       {
-        url: '/og-image.png',
+        url: 'https://merctokendashboard.vercel.app/og-image.png',
         width: 1200,
         height: 630,
         alt: 'MERC Dashboard Preview',
+        type: 'image/png',
       },
     ],
     type: 'website',
