@@ -19,18 +19,26 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: 'MERC Dashboard | Liquid Mercury',
-  description: 'Professional internal monitoring dashboard for MERC token metrics, markets, and staking across Ethereum and Base chains',
-  metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
+  description: 'Professional internal monitoring dashboard for MERC token metrics, markets, and holder analytics across Ethereum and Base chains',
+  metadataBase: new URL('https://merctokendashboard.vercel.app'),
   openGraph: {
-    title: 'MERC Dashboard',
-    description: 'Professional internal monitoring dashboard for MERC token metrics, markets, and staking across Ethereum and Base chains',
-    images: ['/og-image.png'],
+    title: 'MERC Dashboard | Liquid Mercury',
+    description: 'Professional internal monitoring dashboard for MERC token metrics, markets, and holder analytics',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'MERC Dashboard Preview',
+      },
+    ],
     type: 'website',
+    siteName: 'MERC Dashboard',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MERC Dashboard',
-    description: 'Professional internal monitoring dashboard for MERC token',
+    title: 'MERC Dashboard | Liquid Mercury',
+    description: 'Professional internal monitoring dashboard for MERC token metrics, markets, and holder analytics',
     images: ['/og-image.png'],
   },
   icons: {
