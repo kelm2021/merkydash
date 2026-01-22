@@ -15,7 +15,7 @@ const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
     return (
       <div
         ref={ref}
-        className={cn('hero-background rounded-2xl p-8 mb-8', className)}
+        className={cn('hero-background rounded-2xl p-4 sm:p-6 md:p-8 mb-6 md:mb-8', className)}
         {...props}
       >
         <div className="relative z-10">
@@ -25,7 +25,7 @@ const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
               {badge && <div className="mb-3">{badge}</div>}
 
               {/* Title */}
-              <h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-2">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-white mb-2">
                 {title}
               </h1>
 

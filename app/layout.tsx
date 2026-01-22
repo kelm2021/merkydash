@@ -58,7 +58,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${inter.variable} font-body antialiased`}>
         <Sidebar />
-        <main className="ml-64 min-h-screen page-background">
+        <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen page-background">
           {children}
         </main>
       </body>

@@ -264,7 +264,7 @@ export default function TokenMetricsPage() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  'relative px-6 py-4 font-display font-semibold text-sm tracking-wide transition-all duration-200',
+                  'relative px-3 py-3 md:px-6 md:py-4 font-display font-semibold text-xs md:text-sm tracking-wide transition-all duration-200',
                   activeTab === tab
                     ? 'text-white'
                     : 'text-muted-foreground hover:text-white hover:bg-white/10'
@@ -375,7 +375,7 @@ function OverviewTab({ priceChartData, priceChartOptions, allTimeHigh, allTimeLo
         title="Price History"
         subtitle="Historical price performance"
       />
-      <div className="h-[300px] mb-8 p-4 rounded-xl bg-white/5">
+      <div className="h-[200px] md:h-[300px] mb-8 p-2 md:p-4 rounded-xl bg-white/5">
         <Line data={priceChartData} options={priceChartOptions} />
       </div>
 

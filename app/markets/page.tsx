@@ -211,7 +211,7 @@ export default function MarketsPage() {
         )}
 
         {/* Networks Grid */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 gap-4 md:gap-6 mb-8">
           {/* Base Network */}
           <NetworkSection
             network="base"

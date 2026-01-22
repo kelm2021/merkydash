@@ -37,7 +37,7 @@ const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
       <div
         ref={ref}
         className={cn(
-          'glass-card rounded-2xl p-6 card-lift animate-fade-up',
+          'glass-card rounded-2xl p-4 md:p-6 card-lift animate-fade-up',
           className
         )}
         style={{ animationDelay: `${delay}ms` }}
@@ -52,7 +52,7 @@ const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
 
             {/* Value */}
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl md:text-3xl font-display font-bold text-white tabular-nums">
+              <span className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-white tabular-nums">
                 {value}
               </span>
               {trend && (
