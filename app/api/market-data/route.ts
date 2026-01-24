@@ -288,7 +288,7 @@ async function fetchPriceHistory() {
     // Get last 12 months of data for the chart
     const last12Months = priceHistory.slice(-365);
 
-    // Group by month for chart labels
+    // Group by month for chart labels (legacy)
     const monthlyData: { [key: string]: number[] } = {};
     last12Months.forEach((item: any) => {
       const month = item.date.substring(0, 7); // YYYY-MM
@@ -296,7 +296,7 @@ async function fetchPriceHistory() {
       monthlyData[month].push(item.price);
     });
 
-    // Calculate monthly averages
+    // Calculate monthly averages (legacy format for backwards compatibility)
     const chartLabels: string[] = [];
     const chartPrices: number[] = [];
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -311,6 +311,48 @@ async function fetchPriceHistory() {
 
     const currentPrice = priceHistory.length > 0 ? priceHistory[priceHistory.length - 1].price : 0;
 
+    // Enhanced daily data for detailed chart
+    // Return all available data (up to 365 days) - frontend will filter by selected timeframe
+    const dailyData = ohlcvList.map((candle: number[], index: number, arr: number[][]) => {
+      const [timestamp, open, high, low, close, volume] = candle;
+      const date = new Date(timestamp * 1000);
+
+      // Calculate 7-day moving average
+      const startIdx = Math.max(0, index - 6);
+      const ma7Slice = arr.slice(startIdx, index + 1);
+      const ma7 = ma7Slice.reduce((sum, c) => sum + c[4], 0) / ma7Slice.length;
+
+      // Calculate 30-day moving average
+      const startIdx30 = Math.max(0, index - 29);
+      const ma30Slice = arr.slice(startIdx30, index + 1);
+      const ma30 = ma30Slice.reduce((sum, c) => sum + c[4], 0) / ma30Slice.length;
+
+      return {
+        timestamp,
+        date: date.toISOString().split('T')[0],
+        label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        open,
+        high,
+        low,
+        close,
+        volume,
+        ma7,
+        ma30,
+        // Distance from ATH/ATL
+        athDistance: allTimeHigh > 0 ? ((close - allTimeHigh) / allTimeHigh * 100) : 0,
+        atlDistance: allTimeLow > 0 ? ((close - allTimeLow) / allTimeLow * 100) : 0,
+      };
+    });
+
+    // Calculate cumulative volume by week for the period
+    const weeklyVolumes: { [key: string]: number } = {};
+    dailyData.forEach((day: any) => {
+      const weekStart = new Date(day.timestamp * 1000);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekKey = weekStart.toISOString().split('T')[0];
+      weeklyVolumes[weekKey] = (weeklyVolumes[weekKey] || 0) + day.volume;
+    });
+
     return {
       chartLabels,
       chartPrices,
@@ -324,7 +366,10 @@ async function fetchPriceHistory() {
         vwap90d,
         vwap180d,
         vwap360d,
-      }
+      },
+      // Enhanced data for detailed chart
+      dailyData,
+      weeklyVolumes,
     };
   } catch (error) {
     console.error('Error fetching price history:', error);

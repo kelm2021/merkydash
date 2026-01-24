@@ -1,41 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Coins, TrendingUp, Users, Activity, Wallet, BarChart3, ExternalLink, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { RefreshCw, Coins, Users, Activity, Wallet, BarChart3, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GlassCard, GlassCardContent } from '@/components/ui/glass-card';
 import { PageHeader, PriceBadge, SectionHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { DataBadge, ChainBadge } from '@/components/ui/data-badge';
 import { cn } from '@/lib/utils';
-import {
-  Line
-} from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
 
 export default function TokenMetricsPage() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('transactions');
   const [marketData, setMarketData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -86,61 +61,6 @@ export default function TokenMetricsPage() {
 
   const marketCap = currentPrice * circulatingSupply;
   const volume24h = marketData?.aggregate?.totalVolume24h || '0';
-
-  const priceHistory = marketData?.priceHistory;
-  const priceChartData = {
-    labels: priceHistory?.chartLabels?.length > 0
-      ? priceHistory.chartLabels
-      : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-    datasets: [{
-      label: 'Price',
-      data: priceHistory?.chartPrices?.length > 0
-        ? priceHistory.chartPrices
-        : [0.0012, 0.0015, 0.0018, 0.0025, 0.0042, 0.0058, 0.0072],
-      borderColor: '#9DD7E6',
-      backgroundColor: 'rgba(157, 215, 230, 0.15)',
-      borderWidth: 3,
-      tension: 0.4,
-      fill: true,
-      pointBackgroundColor: '#9DD7E6',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
-      pointRadius: 4,
-      pointHoverRadius: 6,
-    }]
-  };
-
-  const allTimeHigh = priceHistory?.allTimeHigh || 0.0245;
-  const allTimeLow = priceHistory?.allTimeLow || 0.001078;
-
-  const priceChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: 'rgba(65, 64, 66, 0.95)',
-        titleColor: '#fff',
-        bodyColor: '#9DD7E6',
-        borderColor: 'rgba(157, 215, 230, 0.3)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        displayColors: false,
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: false,
-        ticks: { color: '#8F9194', font: { family: 'var(--font-body)' } },
-        grid: { color: 'rgba(143, 145, 148, 0.08)' }
-      },
-      x: {
-        ticks: { color: '#8F9194', font: { family: 'var(--font-body)' } },
-        grid: { display: false }
-      }
-    }
-  };
 
   if (loading) {
     return (
@@ -259,7 +179,7 @@ export default function TokenMetricsPage() {
         <GlassCard hover={false} className="overflow-hidden">
           {/* Tab Navigation */}
           <div className="flex border-b border-white/10 bg-white/5">
-            {['overview', 'transactions', 'holders'].map((tab) => (
+            {['transactions', 'holders'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -279,15 +199,6 @@ export default function TokenMetricsPage() {
           </div>
 
           <GlassCardContent className="p-6 pt-6">
-            {activeTab === 'overview' && (
-              <OverviewTab
-                priceChartData={priceChartData}
-                priceChartOptions={priceChartOptions}
-                allTimeHigh={allTimeHigh}
-                allTimeLow={allTimeLow}
-                currentPrice={currentPrice}
-              />
-            )}
             {activeTab === 'transactions' && <TransactionsTab />}
             {activeTab === 'holders' && <HoldersTab />}
           </GlassCardContent>
@@ -361,55 +272,6 @@ function ContractCard({
         </div>
       </GlassCardContent>
     </GlassCard>
-  );
-}
-
-// Overview Tab Component
-function OverviewTab({ priceChartData, priceChartOptions, allTimeHigh, allTimeLow, currentPrice }: any) {
-  const athChange = allTimeHigh > 0 ? ((currentPrice - allTimeHigh) / allTimeHigh * 100).toFixed(1) : '0';
-  const atlChange = allTimeLow > 0 ? ((currentPrice - allTimeLow) / allTimeLow * 100).toFixed(1) : '0';
-
-  return (
-    <>
-      <SectionHeader
-        title="Price History"
-        subtitle="Historical price performance"
-      />
-      <div className="h-[200px] md:h-[300px] mb-8 p-2 md:p-4 rounded-xl bg-white/5">
-        <Line data={priceChartData} options={priceChartOptions} />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GlassCard className="p-5 border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="icon-container icon-container-sm bg-emerald-500/20">
-              <ArrowUpRight className="w-4 h-4 text-emerald-400" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">All-Time High</span>
-          </div>
-          <p className="text-2xl font-display font-bold text-white mb-1 tabular-nums">
-            ${allTimeHigh > 0 ? allTimeHigh.toFixed(6) : '0.00'}
-          </p>
-          <p className={`text-sm font-semibold tabular-nums ${parseFloat(athChange) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-            {parseFloat(athChange) >= 0 ? '+' : ''}{athChange}% from ATH
-          </p>
-        </GlassCard>
-        <GlassCard className="p-5 border border-red-500/30 bg-gradient-to-br from-red-500/10 to-transparent">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="icon-container icon-container-sm bg-red-500/20">
-              <ArrowDownRight className="w-4 h-4 text-red-400" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">All-Time Low</span>
-          </div>
-          <p className="text-2xl font-display font-bold text-white mb-1 tabular-nums">
-            ${allTimeLow > 0 ? allTimeLow.toFixed(6) : '0.00'}
-          </p>
-          <p className={`text-sm font-semibold tabular-nums ${parseFloat(atlChange) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-            {parseFloat(atlChange) >= 0 ? '+' : ''}{atlChange}% from ATL
-          </p>
-        </GlassCard>
-      </div>
-    </>
   );
 }
 
