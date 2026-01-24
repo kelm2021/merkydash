@@ -159,6 +159,16 @@ export default function MarketsPage() {
     );
   }
 
+  // Calculate current price from live pool data (same as Token Metrics page)
+  const pools = [
+    ...(marketData?.base?.pools || []),
+    ...(marketData?.ethereum?.pools || [])
+  ];
+  const livePrices = pools.map((p: any) => parseFloat(p.price)).filter((p: number) => p > 0);
+  const currentPrice = livePrices.length > 0
+    ? livePrices.reduce((a: number, b: number) => a + b, 0) / livePrices.length
+    : marketData?.priceHistory?.currentPrice || 0;
+
   if (error || !marketData) {
     return (
       <div className="min-h-screen page-background">
@@ -196,8 +206,8 @@ export default function MarketsPage() {
             </Button>
           }
         >
-          {marketData.priceHistory?.currentPrice > 0 && (
-            <PriceBadge price={`$${formatPrice(marketData.priceHistory.currentPrice)}`} />
+          {currentPrice > 0 && (
+            <PriceBadge price={`$${currentPrice.toFixed(6)}`} />
           )}
         </PageHeader>
 
@@ -232,7 +242,7 @@ export default function MarketsPage() {
         </div>
 
         {/* Price History Chart */}
-        <PriceHistorySection priceHistory={marketData.priceHistory} />
+        <PriceHistorySection priceHistory={marketData.priceHistory} currentPrice={currentPrice} />
 
         {/* VWAP Section */}
         {marketData.priceHistory?.vwap && (
@@ -242,12 +252,12 @@ export default function MarketsPage() {
               subtitle="Volume-weighted average price across all pools"
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <VWAPCard period="7D" vwap={marketData.priceHistory.vwap.vwap7d} currentPrice={marketData.priceHistory.currentPrice} />
-              <VWAPCard period="30D" vwap={marketData.priceHistory.vwap.vwap30d} currentPrice={marketData.priceHistory.currentPrice} />
-              <VWAPCard period="60D" vwap={marketData.priceHistory.vwap.vwap60d} currentPrice={marketData.priceHistory.currentPrice} />
-              <VWAPCard period="90D" vwap={marketData.priceHistory.vwap.vwap90d} currentPrice={marketData.priceHistory.currentPrice} />
-              <VWAPCard period="180D" vwap={marketData.priceHistory.vwap.vwap180d} currentPrice={marketData.priceHistory.currentPrice} />
-              <VWAPCard period="360D" vwap={marketData.priceHistory.vwap.vwap360d} currentPrice={marketData.priceHistory.currentPrice} />
+              <VWAPCard period="7D" vwap={marketData.priceHistory.vwap.vwap7d} currentPrice={currentPrice} />
+              <VWAPCard period="30D" vwap={marketData.priceHistory.vwap.vwap30d} currentPrice={currentPrice} />
+              <VWAPCard period="60D" vwap={marketData.priceHistory.vwap.vwap60d} currentPrice={currentPrice} />
+              <VWAPCard period="90D" vwap={marketData.priceHistory.vwap.vwap90d} currentPrice={currentPrice} />
+              <VWAPCard period="180D" vwap={marketData.priceHistory.vwap.vwap180d} currentPrice={currentPrice} />
+              <VWAPCard period="360D" vwap={marketData.priceHistory.vwap.vwap360d} currentPrice={currentPrice} />
             </div>
           </div>
         )}
@@ -554,11 +564,11 @@ const TIME_FRAME_DAYS: Record<TimeFrame, number> = {
 };
 
 // Price History Section Component
-function PriceHistorySection({ priceHistory }: { priceHistory: PriceHistory }) {
+function PriceHistorySection({ priceHistory, currentPrice: livePriceParam }: { priceHistory: PriceHistory; currentPrice: number }) {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('90D');
 
   const allDailyData = priceHistory?.dailyData || [];
-  const currentPrice = priceHistory?.currentPrice || 0;
+  const currentPrice = livePriceParam || priceHistory?.currentPrice || 0;
   const allTimeHigh = priceHistory?.allTimeHigh || 0;
   const allTimeLow = priceHistory?.allTimeLow || 0;
 

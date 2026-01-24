@@ -12,25 +12,36 @@ import { cn } from '@/lib/utils';
 export default function TokenMetricsPage() {
   const [activeTab, setActiveTab] = useState('transactions');
   const [marketData, setMarketData] = useState<any>(null);
+  const [holderData, setHolderData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchData = () => {
+  const fetchData = async () => {
     setLoading(true);
-    fetch('/api/market-data')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setMarketData(data);
-        }
-        setLoading(false);
-        setIsRefreshing(false);
-      })
-      .catch(err => {
-        console.error('Error fetching market data:', err);
-        setLoading(false);
-        setIsRefreshing(false);
-      });
+    try {
+      // Fetch market data and holder data in parallel
+      const [marketRes, holderRes] = await Promise.all([
+        fetch('/api/market-data'),
+        fetch('/api/blockchain-holders')
+      ]);
+
+      const [marketJson, holderJson] = await Promise.all([
+        marketRes.json(),
+        holderRes.json()
+      ]);
+
+      if (marketJson.success) {
+        setMarketData(marketJson);
+      }
+      if (holderJson.success) {
+        setHolderData(holderJson);
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -121,7 +132,7 @@ export default function TokenMetricsPage() {
           />
           <StatCard
             title="Total Holders"
-            value="3,370"
+            value={holderData?.totalHolders?.total ? holderData.totalHolders.total.toLocaleString() : '—'}
             icon={Users}
             iconColor="text-emerald-500"
             delay={100}

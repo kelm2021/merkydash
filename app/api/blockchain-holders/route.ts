@@ -27,6 +27,50 @@ function getKnownWalletInfo(address: string): { name: string; category: string; 
   return KNOWN_WALLETS[address.toLowerCase()] || null;
 }
 
+// Fetch Ethereum token info including holder count
+async function fetchEthereumHolderCount(): Promise<number> {
+  try {
+    const url = `https://api.ethplorer.io/getTokenInfo/${ETH_CONTRACT}?apiKey=freekey`;
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      next: { revalidate: 300 }
+    });
+
+    if (!response.ok) {
+      console.error('Ethplorer token info API error:', response.status);
+      return 0;
+    }
+
+    const data = await response.json();
+    return data.holdersCount || 0;
+  } catch (error) {
+    console.error('Error fetching Ethereum holder count:', error);
+    return 0;
+  }
+}
+
+// Fetch Base token info including holder count from Blockscout
+async function fetchBaseHolderCount(): Promise<number> {
+  try {
+    const url = `https://base.blockscout.com/api/v2/tokens/${BASE_CONTRACT}`;
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      next: { revalidate: 300 }
+    });
+
+    if (!response.ok) {
+      console.error('Blockscout token info API error:', response.status);
+      return 0;
+    }
+
+    const data = await response.json();
+    return parseInt(data.holders_count || '0', 10);
+  } catch (error) {
+    console.error('Error fetching Base holder count:', error);
+    return 0;
+  }
+}
+
 // Fetch top Ethereum holders using Ethplorer (free API with direct top holders endpoint)
 async function fetchEthereumHolders() {
   try {
@@ -223,10 +267,12 @@ function mergeWalletsByAddress(holders: any[]): any[] {
 
 export async function GET() {
   try {
-    // Fetch from both chains in parallel
-    const [ethHolders, baseHolders] = await Promise.all([
+    // Fetch from both chains in parallel (holders and counts)
+    const [ethHolders, baseHolders, ethHolderCount, baseHolderCount] = await Promise.all([
       fetchEthereumHolders(),
-      fetchBaseHolders()
+      fetchBaseHolders(),
+      fetchEthereumHolderCount(),
+      fetchBaseHolderCount()
     ]);
 
     // Combine all holders
@@ -262,7 +308,12 @@ export async function GET() {
       externalHolders: externalHolders,
       holders: externalHolders,
       count: externalHolders.length,
-      knownCount: knownWallets.length
+      knownCount: knownWallets.length,
+      totalHolders: {
+        ethereum: ethHolderCount,
+        base: baseHolderCount,
+        total: ethHolderCount + baseHolderCount
+      }
     });
   } catch (error) {
     console.error('Error in blockchain-holders API:', error);
