@@ -769,7 +769,7 @@ function PriceHistorySection({ priceHistory, currentPrice: livePriceParam }: { p
           maxTicksLimit: 6,
         },
         grid: {
-          color: 'rgba(143, 145, 148, 0.08)',
+          color: 'rgba(143, 145, 148, 0.1)',
           drawBorder: false,
         },
         border: { display: false },
@@ -781,7 +781,10 @@ function PriceHistorySection({ priceHistory, currentPrice: livePriceParam }: { p
           maxRotation: 0,
           maxTicksLimit: timeFrame === '7D' ? 7 : timeFrame === '30D' ? 10 : timeFrame === '90D' ? 8 : 12,
         },
-        grid: { display: false },
+        grid: {
+          color: 'rgba(143, 145, 148, 0.05)',
+          drawBorder: false,
+        },
         border: { display: false },
       }
     }
