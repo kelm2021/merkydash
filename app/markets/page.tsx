@@ -566,6 +566,8 @@ const TIME_FRAME_DAYS: Record<TimeFrame, number> = {
 // Price History Section Component
 function PriceHistorySection({ priceHistory, currentPrice: livePriceParam }: { priceHistory: PriceHistory; currentPrice: number }) {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('90D');
+  const [hoveredData, setHoveredData] = useState<DailyDataPoint | null>(null);
+  const [hoveredDayChange, setHoveredDayChange] = useState<number | null>(null);
 
   const allDailyData = priceHistory?.dailyData || [];
   const currentPrice = livePriceParam || priceHistory?.currentPrice || 0;
@@ -585,6 +587,18 @@ function PriceHistorySection({ priceHistory, currentPrice: livePriceParam }: { p
   const periodStartPrice = dailyData.length > 0 ? dailyData[0].close : 0;
   const periodEndPrice = dailyData.length > 0 ? dailyData[dailyData.length - 1].close : 0;
   const periodChange = periodStartPrice > 0 ? ((periodEndPrice - periodStartPrice) / periodStartPrice * 100) : 0;
+
+  // Display data: hovered point or latest point
+  const latestDay = dailyData.length > 0 ? dailyData[dailyData.length - 1] : null;
+  const displayDay = hoveredData || latestDay;
+  const displayDayChange = hoveredData ? hoveredDayChange : (() => {
+    if (dailyData.length >= 2) {
+      const prev = dailyData[dailyData.length - 2];
+      const last = dailyData[dailyData.length - 1];
+      return prev.close > 0 ? ((last.close - prev.close) / prev.close * 100) : 0;
+    }
+    return null;
+  })();
 
   // Chart data
   const priceChartData = useDetailedChart ? {
@@ -663,7 +677,7 @@ function PriceHistorySection({ priceHistory, currentPrice: livePriceParam }: { p
     }]
   };
 
-  // Chart options
+  // Chart options — tooltip data is displayed in a fixed bar above the chart
   const priceChartOptions: any = {
     responsive: true,
     maintainAspectRatio: false,
@@ -671,89 +685,61 @@ function PriceHistorySection({ priceHistory, currentPrice: livePriceParam }: { p
       mode: 'index' as const,
       intersect: false,
     },
+    onHover: useDetailedChart ? (_event: any, _elements: any, chart: any) => {
+      const tooltip = chart.tooltip;
+      if (!tooltip || tooltip.opacity === 0) {
+        setHoveredData(null);
+        setHoveredDayChange(null);
+        return;
+      }
+      const dataIndex = tooltip.dataPoints?.[0]?.dataIndex;
+      if (dataIndex === undefined) {
+        setHoveredData(null);
+        setHoveredDayChange(null);
+        return;
+      }
+      const day = dailyData[dataIndex];
+      if (!day) return;
+      const prevDay = dataIndex > 0 ? dailyData[dataIndex - 1] : null;
+      const change = prevDay ? ((day.close - prevDay.close) / prevDay.close * 100) : null;
+      setHoveredData(day);
+      setHoveredDayChange(change);
+    } : undefined,
     plugins: {
       legend: {
         display: false,
       },
       tooltip: {
         enabled: false,
+        // Lightweight crosshair-only external tooltip (vertical line + dot, no box)
         external: useDetailedChart ? (context: any) => {
           const { chart, tooltip } = context;
 
-          // Get or create tooltip element
-          let tooltipEl = chart.canvas.parentNode.querySelector('.custom-tooltip');
-          if (!tooltipEl) {
-            tooltipEl = document.createElement('div');
-            tooltipEl.className = 'custom-tooltip';
-            tooltipEl.style.cssText = `
+          // Get or create crosshair line element
+          let lineEl = chart.canvas.parentNode.querySelector('.crosshair-line');
+          if (!lineEl) {
+            lineEl = document.createElement('div');
+            lineEl.className = 'crosshair-line';
+            lineEl.style.cssText = `
               position: absolute;
-              background: rgba(30, 30, 32, 0.95);
-              border: 1px solid rgba(157, 215, 230, 0.3);
-              border-radius: 10px;
-              padding: 14px;
+              width: 1px;
+              top: 0;
+              bottom: 0;
+              background: rgba(157, 215, 230, 0.3);
               pointer-events: none;
-              font-size: 12px;
-              font-weight: bold;
-              color: #B8BABC;
-              z-index: 100;
-              transition: opacity 0.15s ease;
+              transition: opacity 0.1s ease, left 0.05s ease;
+              z-index: 10;
             `;
-            chart.canvas.parentNode.appendChild(tooltipEl);
+            chart.canvas.parentNode.appendChild(lineEl);
           }
 
-          // Hide if no tooltip
           if (tooltip.opacity === 0) {
-            tooltipEl.style.opacity = '0';
+            lineEl.style.opacity = '0';
             return;
           }
 
-          // Get data
-          const dataIndex = tooltip.dataPoints?.[0]?.dataIndex;
-          if (dataIndex === undefined) return;
-
-          const day = dailyData[dataIndex];
-          if (!day) return;
-
-          const prevDay = dataIndex > 0 ? dailyData[dataIndex - 1] : null;
-          const dayChange = prevDay ? ((day.close - prevDay.close) / prevDay.close * 100) : 0;
-          const dayChangeColor = dayChange >= 0 ? '#34d399' : '#f87171';
-          const athColor = day.athDistance >= 0 ? '#34d399' : '#f87171';
-          const atlColor = day.atlDistance >= 0 ? '#34d399' : '#f87171';
-
-          // Build HTML
-          tooltipEl.innerHTML = `
-            <div style="color: #fff; font-size: 13px; margin-bottom: 10px;">${day.date}</div>
-            <div style="margin-bottom: 4px;">Price: <span style="color: #9DD7E6;">$${formatPrice(day.close)}</span></div>
-            <div style="margin-bottom: 10px;">Day Change: <span style="color: ${dayChangeColor};">${prevDay ? formatPercent(dayChange) : 'N/A'}</span></div>
-            <div style="margin-bottom: 4px;">High: <span style="color: #fff;">$${formatPrice(day.high)}</span></div>
-            <div style="margin-bottom: 10px;">Low: <span style="color: #fff;">$${formatPrice(day.low)}</span></div>
-            <div style="margin-bottom: 4px;">7D MA: <span style="color: #a78bfa;">$${formatPrice(day.ma7)}</span></div>
-            <div style="margin-bottom: 10px;">30D MA: <span style="color: #fbbf24;">$${formatPrice(day.ma30)}</span></div>
-            <div style="margin-bottom: 4px;">From ATH: <span style="color: ${athColor};">${formatPercent(day.athDistance)}</span></div>
-            <div style="margin-bottom: ${day.volume > 0 ? '10px' : '0'};">From ATL: <span style="color: ${atlColor};">${formatPercent(day.atlDistance)}</span></div>
-            ${day.volume > 0 ? `<div>Volume: <span style="color: #fff;">${formatVolume(day.volume)}</span></div>` : ''}
-          `;
-
-          // Position tooltip
-          const canvasRect = chart.canvas.getBoundingClientRect();
-          const tooltipWidth = tooltipEl.offsetWidth;
-          const tooltipHeight = tooltipEl.offsetHeight;
-
-          let left = tooltip.caretX + 10;
-          let top = tooltip.caretY - tooltipHeight / 2;
-
-          // Keep tooltip within bounds
-          if (left + tooltipWidth > chart.width) {
-            left = tooltip.caretX - tooltipWidth - 10;
-          }
-          if (top < 0) top = 10;
-          if (top + tooltipHeight > chart.height) {
-            top = chart.height - tooltipHeight - 10;
-          }
-
-          tooltipEl.style.opacity = '1';
-          tooltipEl.style.left = left + 'px';
-          tooltipEl.style.top = top + 'px';
+          lineEl.style.opacity = '1';
+          lineEl.style.left = tooltip.caretX + 'px';
         } : undefined,
         backgroundColor: 'rgba(30, 30, 32, 0.95)',
         titleColor: '#fff',
@@ -899,14 +885,64 @@ function PriceHistorySection({ priceHistory, currentPrice: livePriceParam }: { p
           </div>
         </div>
 
-        <div className="h-[250px] md:h-[350px] mb-4">
+        {/* Hover Data Bar — fixed above chart, never obscures the graph */}
+        {useDetailedChart && displayDay && (
+          <div className={cn(
+            'mb-3 px-3 py-2.5 rounded-lg border transition-colors duration-150',
+            hoveredData
+              ? 'bg-white/[0.04] border-mercury-aqua/20'
+              : 'bg-white/[0.02] border-white/[0.06]'
+          )}>
+            {/* Row 1: Date, Price, Change, H/L */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs">
+              <span className="font-semibold text-white">{displayDay.date}</span>
+              <span className="text-muted-foreground">
+                Price <span className="text-mercury-aqua font-semibold tabular-nums">${formatPrice(displayDay.close)}</span>
+              </span>
+              {displayDayChange !== null && (
+                <span className="text-muted-foreground">
+                  Chg <span className={cn('font-semibold tabular-nums', displayDayChange >= 0 ? 'text-emerald-400' : 'text-red-400')}>
+                    {formatPercent(displayDayChange)}
+                  </span>
+                </span>
+              )}
+              <span className="text-muted-foreground">
+                H <span className="text-white font-semibold tabular-nums">${formatPrice(displayDay.high)}</span>
+              </span>
+              <span className="text-muted-foreground">
+                L <span className="text-white font-semibold tabular-nums">${formatPrice(displayDay.low)}</span>
+              </span>
+              <span className="text-muted-foreground">
+                7D MA <span className="font-semibold tabular-nums" style={{color: '#a78bfa'}}>${formatPrice(displayDay.ma7)}</span>
+              </span>
+              <span className="text-muted-foreground">
+                30D MA <span className="font-semibold tabular-nums" style={{color: '#fbbf24'}}>${formatPrice(displayDay.ma30)}</span>
+              </span>
+              <span className="text-muted-foreground">
+                ATH <span className={cn('font-semibold tabular-nums', displayDay.athDistance >= 0 ? 'text-emerald-400' : 'text-red-400')}>
+                  {formatPercent(displayDay.athDistance)}
+                </span>
+              </span>
+              <span className="text-muted-foreground">
+                ATL <span className={cn('font-semibold tabular-nums', displayDay.atlDistance >= 0 ? 'text-emerald-400' : 'text-red-400')}>
+                  {formatPercent(displayDay.atlDistance)}
+                </span>
+              </span>
+              {displayDay.volume > 0 && (
+                <span className="text-muted-foreground">
+                  Vol <span className="text-white font-semibold tabular-nums">{formatVolume(displayDay.volume)}</span>
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div
+          className="h-[250px] md:h-[350px] mb-4 relative"
+          onMouseLeave={() => { setHoveredData(null); setHoveredDayChange(null); }}
+        >
           <Line data={priceChartData} options={priceChartOptions} />
         </div>
-        {useDetailedChart && (
-          <p className="text-xs text-muted-foreground text-center">
-            💡 Hover over the chart to see detailed metrics including daily high/low, moving averages, and distance from ATH/ATL
-          </p>
-        )}
       </GlassCard>
 
       {/* ATH/ATL Cards */}
